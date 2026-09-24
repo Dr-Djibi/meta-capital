@@ -205,7 +205,14 @@ src/
 - Produits : ajout avec photo, calcul du prix conseillé, statuts, recherche, filtres par statut et enregistrement des ventes.
 - Produits : affichage séparé du prix de revient unitaire, du prix de vente unitaire conseillé et de la quantité en stock.
 - Ventes : écran dédié pour saisir le prix réellement payé en GNF, le livreur en GNF, la quantité et le moyen de paiement.
+- Stock : une vente liée à un produit décrémente automatiquement sa quantité disponible.
+- Résumé ventes : brut, frais livreur, net et nombre de ventes du jour.
+- Historique ventes : filtres Aujourd’hui, 7 jours et Tout, avec détail par produit.
+- Rentabilité : bénéfice et marge estimés selon le prix réel, les coûts produit, la publicité et le livreur.
+- Paiements : répartition des encaissements du jour par moyen de paiement.
+- Taux : bouton de rafraîchissement manuel disponible uniquement dans Paramètres.
 - Le prix d’achat produit et le budget publicitaire quotidien restent en USD, le transitaire est en GNF avec une durée publicitaire en jours.
+- Le budget publicitaire total est réparti par unité : `(budget quotidien USD × jours) ÷ quantité prévue`.
 - Le prix conseillé d’un produit est indicatif et indépendant du prix réel de vente.
 - Le montant ajouté au capital est calculé automatiquement avec `(prix réel GNF - livreur GNF) × quantité`, puis converti en USD avec le taux live.
 - Graphique : affichage responsive des 12 dernières opérations, tendance, grille et solde cumulé historique.

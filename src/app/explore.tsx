@@ -36,7 +36,7 @@ const STATUS_COLORS: Record<ProductStatus, string> = {
 function getProductCostUSD(product: Product, rate: number) {
   const freightGNF = product.freightPerKgGNF ?? (product.freightPerKg ?? 0) * USD_TO_GNF;
   const dailyBudgetUSD = getDailyAdBudgetUSD(product);
-  return product.purchasePrice + (product.weight * freightGNF) / rate + dailyBudgetUSD * (product.adDays ?? 1);
+  return product.purchasePrice + (product.weight * freightGNF) / rate + (dailyBudgetUSD * (product.adDays ?? 1)) / Math.max(product.quantity ?? 1, 1);
 }
 
 function getDailyAdBudgetUSD(product: Product) {
@@ -72,6 +72,7 @@ export default function ProduitsScreen() {
     f(freightPerKgGNF),
     f(dailyAdBudgetUSD),
     f(adDays),
+    f(quantity),
     f(targetMargin) / 100,
     rate
   );
@@ -241,7 +242,7 @@ export default function ProduitsScreen() {
                 </View>
               </View>
               <View style={styles.inputGroupQuantity}>
-                <Text style={styles.inputLabel}>Quantité</Text>
+                <Text style={styles.inputLabel}>Quantité prévue / stock</Text>
                 <View style={styles.inputWrapperSmall}>
                   <TextInput style={styles.inputSmall} keyboardType="number-pad" value={quantity} onChangeText={setQuantity} placeholder="1" placeholderTextColor="#4b5563" />
                   <Text style={styles.unit}>unités</Text>
@@ -425,7 +426,7 @@ export default function ProduitsScreen() {
               </View>
               <View style={styles.summaryItem}>
                 <Text style={styles.priceLabel}>Vente unitaire conseillée</Text>
-                <Text style={styles.priceHighlight}>{calcSuggestedPrice(p.purchasePrice, p.weight, p.freightPerKgGNF ?? (p.freightPerKg ?? 0) * USD_TO_GNF, getDailyAdBudgetUSD(p), p.adDays ?? 1, p.targetMargin, rate).toFixed(2)} $</Text>
+                <Text style={styles.priceHighlight}>{calcSuggestedPrice(p.purchasePrice, p.weight, p.freightPerKgGNF ?? (p.freightPerKg ?? 0) * USD_TO_GNF, getDailyAdBudgetUSD(p), p.adDays ?? 1, p.quantity ?? 1, p.targetMargin, rate).toFixed(2)} $</Text>
               </View>
               <View style={styles.summaryItem}>
                 <Text style={styles.priceLabel}>Quantité</Text>

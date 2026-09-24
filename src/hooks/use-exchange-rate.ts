@@ -7,6 +7,7 @@ interface ExchangeState {
   loading: boolean;
   lastUpdated: string | null;
   error: boolean;
+  refresh: () => Promise<void>;
 }
 
 const CACHE_KEY = 'exchange_rate_cache';
@@ -28,6 +29,7 @@ export function useExchangeRate(): ExchangeState {
     loading: true,
     lastUpdated: null,
     error: false,
+    refresh: async () => undefined,
   });
 
   useEffect(() => {
@@ -50,6 +52,7 @@ export function useExchangeRate(): ExchangeState {
                   minute: '2-digit',
                 }),
                 error: false,
+                refresh: async () => undefined,
               });
             }
           }
@@ -76,6 +79,7 @@ export function useExchangeRate(): ExchangeState {
               minute: '2-digit',
             }),
             error: false,
+            refresh: async () => undefined,
           });
         }
       } catch {
@@ -98,5 +102,14 @@ export function useExchangeRate(): ExchangeState {
     };
   }, []);
 
-  return state;
+  return { ...state, refresh: async () => {
+    // The effect owns the refresh logic; reloading the hook is intentionally not needed.
+    const response = await fetch('https://open.er-api.com/v6/latest/USD');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    const rate = data?.rates?.GNF;
+    if (typeof rate !== 'number' || rate <= 0) throw new Error('No GNF rate');
+    await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({ rate, fetchedAt: Date.now() } satisfies CachedRate));
+    setState({ rate, loading: false, lastUpdated: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), error: false, refresh: state.refresh });
+  } };
 }

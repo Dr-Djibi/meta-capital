@@ -1,11 +1,11 @@
 import React from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useExchangeRate } from '@/hooks/use-exchange-rate';
 
 export default function SettingsScreen() {
-  const { rate, loading, lastUpdated, error } = useExchangeRate();
+  const { rate, loading, lastUpdated, error, refresh } = useExchangeRate();
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -21,7 +21,7 @@ export default function SettingsScreen() {
               <Text style={styles.rateValue}>1 USD = {Math.round(rate).toLocaleString('fr-FR')} GNF</Text>
               <Text style={styles.rateMeta}>{loading ? 'Actualisation en cours…' : error ? 'Hors ligne · taux précédent ou secours' : `Dernière mise à jour à ${lastUpdated ?? 'maintenant'}`}</Text>
             </View>
-            {loading && <ActivityIndicator size="small" color="#60a5fa" />}
+            {loading ? <ActivityIndicator size="small" color="#60a5fa" /> : <TouchableOpacity style={styles.refreshButton} onPress={() => refresh()}><Ionicons name="refresh-outline" size={17} color="#60a5fa" /></TouchableOpacity>}
           </View>
           <Text style={styles.help}>Le taux est récupéré automatiquement en ligne et conservé localement pour continuer à convertir sans réseau.</Text>
         </View>
@@ -48,6 +48,7 @@ const styles = StyleSheet.create({
   rateInfo: { flex: 1, gap: 4 },
   rateValue: { color: '#f9fafb', fontSize: 16, fontWeight: '800' },
   rateMeta: { color: '#64748b', fontSize: 11 },
+  refreshButton: { width: 34, height: 34, borderRadius: 9, backgroundColor: '#172554', alignItems: 'center', justifyContent: 'center' },
   help: { color: '#64748b', fontSize: 12, lineHeight: 17 },
   ruleCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#0f172a', borderRadius: 14, borderWidth: 1, borderColor: '#1f2937', padding: 14 },
   ruleTitle: { color: '#e5e7eb', fontSize: 13, fontWeight: '800', marginBottom: 3 },

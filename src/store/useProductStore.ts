@@ -41,7 +41,7 @@ export interface Product {
 
 /**
  * Frais transitaire USD = weight * freightPerKgGNF / taux
- * Budget publicitaire USD = dailyAdBudgetUSD * adDays
+ * Budget publicitaire par unité = (dailyAdBudgetUSD * adDays) / quantité prévue
  * CUT = purchasePrice + Frais transitaire + Budget publicitaire
  * Prix de vente = CUT / (1 - targetMargin)
  */
@@ -51,11 +51,12 @@ export function calcSuggestedPrice(
   freightPerKgGNF: number,
   dailyAdBudgetUSD: number,
   adDays: number,
+  quantity: number,
   targetMargin: number,
   usdToGnf = USD_TO_GNF
 ): number {
   const shippingCost = (weight * freightPerKgGNF) / usdToGnf;
-  const advertisingCost = dailyAdBudgetUSD * adDays;
+  const advertisingCost = (dailyAdBudgetUSD * adDays) / Math.max(quantity, 1);
   const cut = purchasePrice + shippingCost + advertisingCost;
   if (targetMargin >= 1) return cut;
   return cut / (1 - targetMargin);
@@ -80,6 +81,7 @@ interface ProductState {
   products: Product[];
   addProduct: (p: ProductInput) => void;
   updateProduct: (id: string, updates: Partial<ProductInput>) => void;
+  decrementQuantity: (id: string, quantity: number) => void;
   deleteProduct: (id: string) => void;
 }
 
@@ -102,6 +104,7 @@ export const useProductStore = create<ProductState>()(
                 normalized.freightPerKgGNF,
                 normalized.dailyAdBudgetUSD,
                 normalized.adDays,
+                normalized.quantity,
                 normalized.targetMargin
               ),
             },
@@ -129,10 +132,20 @@ export const useProductStore = create<ProductState>()(
                 freightPerKgGNF,
                 dailyAdBudgetUSD,
                 adDays,
+                updated.quantity,
                 updated.targetMargin
               ),
             };
           }),
+        })),
+
+      decrementQuantity: (id, quantity) =>
+        set((s) => ({
+          products: s.products.map((product) =>
+            product.id === id
+              ? { ...product, quantity: Math.max(0, product.quantity - quantity) }
+              : product
+          ),
         })),
 
       deleteProduct: (id) =>

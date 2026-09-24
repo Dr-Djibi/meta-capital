@@ -45,6 +45,12 @@ export interface Transaction {
   paymentMethod: PaymentMethod;
   description: string;
   date: string;
+  productId?: string;
+  productTitle?: string;
+  saleQuantity?: number;
+  saleGrossGNF?: number;
+  deliveryFeeGNF?: number;
+  profitUSD?: number;
 }
 
 interface CapitalState {
