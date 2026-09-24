@@ -3,32 +3,46 @@ export const USD_TO_GNF = 8600;
 
 export type Currency = 'USD' | 'GNF';
 
-export type PaymentMethod =
+export type StandardPaymentMethod =
   | 'ORANGE_MONEY'
   | 'CARTE_BANCAIRE'
   | 'ESPECES'
   | 'VIREMENT';
 
-export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+export type PaymentMethod = StandardPaymentMethod | `CUSTOM:${string}`;
+
+export const PAYMENT_METHOD_LABELS: Record<StandardPaymentMethod, string> = {
   ORANGE_MONEY: 'Orange Money',
   CARTE_BANCAIRE: 'Carte bancaire',
   ESPECES: 'Espèces',
   VIREMENT: 'Virement',
 };
 
-export const PAYMENT_METHOD_ICONS: Record<PaymentMethod, string> = {
+export const PAYMENT_METHOD_ICONS: Record<StandardPaymentMethod, string> = {
   ORANGE_MONEY: 'phone-portrait-outline',
   CARTE_BANCAIRE: 'card-outline',
   ESPECES: 'cash-outline',
   VIREMENT: 'swap-horizontal-outline',
 };
 
-export const PAYMENT_METHOD_COLORS: Record<PaymentMethod, string> = {
+export const PAYMENT_METHOD_COLORS: Record<StandardPaymentMethod, string> = {
   ORANGE_MONEY: '#f97316',
   CARTE_BANCAIRE: '#6366f1',
   ESPECES: '#22c55e',
   VIREMENT: '#3b82f6',
 };
+
+export function getPaymentMethodLabel(method: PaymentMethod): string {
+  return method.startsWith('CUSTOM:') ? method.slice(7) : PAYMENT_METHOD_LABELS[method as StandardPaymentMethod];
+}
+
+export function getPaymentMethodIcon(method: PaymentMethod): string {
+  return method.startsWith('CUSTOM:') ? 'business-outline' : PAYMENT_METHOD_ICONS[method as StandardPaymentMethod];
+}
+
+export function getPaymentMethodColor(method: PaymentMethod): string {
+  return method.startsWith('CUSTOM:') ? '#a78bfa' : PAYMENT_METHOD_COLORS[method as StandardPaymentMethod];
+}
 
 /** Convertit un montant dans une devise en USD */
 export function toUSD(amount: number, currency: Currency, usdToGnf = USD_TO_GNF): number {

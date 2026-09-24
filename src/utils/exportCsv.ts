@@ -1,7 +1,7 @@
+import { USD_TO_GNF, getPaymentMethodLabel } from '@/constants/currency';
+import { CATEGORY_LABELS, Transaction } from '@/store/useCapitalStore';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { Transaction, CATEGORY_LABELS } from '@/store/useCapitalStore';
-import { USD_TO_GNF, PAYMENT_METHOD_LABELS } from '@/constants/currency';
 
 /**
  * Génère un CSV des transactions et ouvre le share sheet natif.
@@ -35,7 +35,7 @@ export async function exportTransactionsToCSV(
         escape(new Date(t.date).toLocaleDateString('fr-FR')),
         escape(t.type === 'INCOME' ? 'Dépôt' : 'Retrait'),
         escape(CATEGORY_LABELS[t.category]),
-        escape(PAYMENT_METHOD_LABELS[t.paymentMethod]),
+        escape(getPaymentMethodLabel(t.paymentMethod)),
         t.amount.toFixed(2),
         Math.round(t.amount * liveRate).toString(),
         escape(t.description ?? ''),

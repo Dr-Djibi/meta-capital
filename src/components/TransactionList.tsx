@@ -1,30 +1,30 @@
-import { View, Text, StyleSheet, Alert, TextInput, TouchableOpacity } from 'react-native';
-import React, { useCallback } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-  runOnJS,
-  interpolate,
-  Extrapolation,
-} from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import * as Haptics from 'expo-haptics';
 import {
-  useCapitalStore,
-  CATEGORY_LABELS,
-  CATEGORY_ICONS,
-  Transaction,
-} from '@/store/useCapitalStore';
-import {
-  PAYMENT_METHOD_LABELS,
-  PAYMENT_METHOD_ICONS,
-  PAYMENT_METHOD_COLORS,
-  formatUSD,
-  formatGNF,
+    formatGNF,
+    formatUSD,
+    getPaymentMethodColor,
+    getPaymentMethodIcon,
+    getPaymentMethodLabel
 } from '@/constants/currency';
+import {
+    CATEGORY_ICONS,
+    CATEGORY_LABELS,
+    Transaction,
+    useCapitalStore,
+} from '@/store/useCapitalStore';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import React, { useCallback } from 'react';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+    Extrapolation,
+    interpolate,
+    runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
+} from 'react-native-reanimated';
 
 const SWIPE_THRESHOLD = -80;
 const DELETE_THRESHOLD = -140;
@@ -45,9 +45,9 @@ function SwipeableRow({ item, liveRate, onDelete, onEdit }: SwipeableRowProps) {
   const amountUSD = item.amount;
   const amountGNF = amountUSD * liveRate;
 
-  const pmColor = item.paymentMethod ? PAYMENT_METHOD_COLORS[item.paymentMethod] : '#4b5563';
-  const pmLabel = item.paymentMethod ? PAYMENT_METHOD_LABELS[item.paymentMethod] : null;
-  const pmIcon = item.paymentMethod ? PAYMENT_METHOD_ICONS[item.paymentMethod] : null;
+  const pmColor = item.paymentMethod ? getPaymentMethodColor(item.paymentMethod) : '#4b5563';
+  const pmLabel = item.paymentMethod ? getPaymentMethodLabel(item.paymentMethod) : null;
+  const pmIcon = item.paymentMethod ? getPaymentMethodIcon(item.paymentMethod) : null;
 
   const triggerDelete = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

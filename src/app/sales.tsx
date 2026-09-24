@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import { PAYMENT_METHOD_COLORS, PAYMENT_METHOD_ICONS, PAYMENT_METHOD_LABELS, PaymentMethod, StandardPaymentMethod, USD_TO_GNF } from '@/constants/currency';
+import { useExchangeRate } from '@/hooks/use-exchange-rate';
+import { useCapitalStore } from '@/store/useCapitalStore';
+import { calcSuggestedPrice, useProductStore } from '@/store/useProductStore';
+import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { calcSuggestedPrice, useProductStore } from '@/store/useProductStore';
-import { USD_TO_GNF } from '@/constants/currency';
-import { useCapitalStore } from '@/store/useCapitalStore';
-import { useExchangeRate } from '@/hooks/use-exchange-rate';
-import { PaymentMethod, PAYMENT_METHOD_COLORS, PAYMENT_METHOD_ICONS, PAYMENT_METHOD_LABELS } from '@/constants/currency';
 
-const methods = Object.keys(PAYMENT_METHOD_LABELS) as PaymentMethod[];
+const methods = Object.keys(PAYMENT_METHOD_LABELS) as StandardPaymentMethod[];
 const numberValue = (value: string) => parseFloat(value.replace(',', '.')) || 0;
 
 export default function SalesScreen() {
@@ -36,7 +35,7 @@ export default function SalesScreen() {
   const profitUSD = netGNF / rate - productCostUSD * Math.max(1, Math.floor(numberValue(quantity)));
   const profitMargin = netGNF > 0 && selectedProduct ? (profitUSD / (netGNF / rate)) * 100 : null;
   const sales = transactions.filter((transaction) => transaction.category === 'SALES_REVENUE');
-  const now = Date.now();
+  const [now] = useState(() => Date.now());
   const filteredSales = sales.filter((transaction) => {
     const age = now - new Date(transaction.date).getTime();
     return historyFilter === 'TODAY'

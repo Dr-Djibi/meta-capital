@@ -1,38 +1,39 @@
-import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ScrollView,
+    Currency,
+    getPaymentMethodColor,
+    getPaymentMethodIcon,
+    getPaymentMethodLabel,
+    PaymentMethod,
+    StandardPaymentMethod,
+    toUSD,
+    USD_TO_GNF
+} from '@/constants/currency';
+import {
+    CATEGORY_ICONS,
+    CATEGORY_LABELS,
+    Transaction,
+    TransactionCategory,
+    useCapitalStore,
+} from '@/store/useCapitalStore';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useState } from 'react';
+import {
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSequence,
-  withTiming,
-  withSpring,
+    useAnimatedStyle,
+    useSharedValue,
+    withSequence,
+    withSpring,
+    withTiming,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons';
-import {
-  useCapitalStore,
-  TransactionCategory,
-  CATEGORY_LABELS,
-  CATEGORY_ICONS,
-  Transaction,
-} from '@/store/useCapitalStore';
-import {
-  Currency,
-  PaymentMethod,
-  PAYMENT_METHOD_LABELS,
-  PAYMENT_METHOD_ICONS,
-  PAYMENT_METHOD_COLORS,
-  toUSD,
-  USD_TO_GNF,
-} from '@/constants/currency';
 
 const INCOME_CATEGORIES: TransactionCategory[] = [
   'PERSONAL_FUNDS',
@@ -45,7 +46,7 @@ const EXPENSE_CATEGORIES: TransactionCategory[] = [
   'PERSONAL_EXPENSE',
 ];
 
-const ALL_PAYMENT_METHODS: PaymentMethod[] = [
+const ALL_PAYMENT_METHODS: StandardPaymentMethod[] = [
   'ORANGE_MONEY',
   'CARTE_BANCAIRE',
   'ESPECES',
@@ -67,7 +68,9 @@ export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTran
   const [currency, setCurrency] = useState<Currency>(initialTransaction?.currency ?? 'USD');
   const [description, setDescription] = useState(initialTransaction?.description ?? '');
   const [category, setCategory] = useState<TransactionCategory>(initialTransaction?.category ?? 'PERSONAL_FUNDS');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(initialTransaction?.paymentMethod ?? 'ORANGE_MONEY');
+  type PaymentSelection = PaymentMethod | 'CUSTOM';
+  const [paymentMethod, setPaymentMethod] = useState<PaymentSelection>(initialTransaction?.paymentMethod.startsWith('CUSTOM:') ? 'CUSTOM' : initialTransaction?.paymentMethod ?? 'ORANGE_MONEY');
+  const [customPlatform, setCustomPlatform] = useState(initialTransaction?.paymentMethod.startsWith('CUSTOM:') ? initialTransaction.paymentMethod.slice(7) : '');
 
   const categories = type === 'INCOME' && allowInitialBalance
     ? ['INITIAL_BALANCE', ...INCOME_CATEGORIES] as TransactionCategory[]
@@ -98,14 +101,19 @@ export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTran
       Alert.alert('Montant invalide', 'Entre un montant positif.');
       return;
     }
+    if (paymentMethod === 'CUSTOM' && !customPlatform.trim()) {
+      Alert.alert('Plateforme manquante', 'Entre le nom de la plateforme.');
+      return;
+    }
     const amountInUSD = toUSD(parsed, currency, liveRate);
+    const selectedPaymentMethod: PaymentMethod = paymentMethod === 'CUSTOM' ? `CUSTOM:${customPlatform.trim()}` : paymentMethod;
     const transactionData = {
       amount: amountInUSD,
       currency,
       originalAmount: parsed,
       type,
       category,
-      paymentMethod,
+      paymentMethod: selectedPaymentMethod,
       description,
     };
     if (initialTransaction) {
@@ -114,10 +122,10 @@ export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTran
       addTransaction(transactionData);
     }
     // Animation de succès
-    submitScale.value = withSequence(
+    submitScale.set(withSequence(
       withTiming(0.93, { duration: 80 }),
       withSpring(1, { damping: 5, stiffness: 200 })
-    );
+    ));
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setAmount('');
     setDescription('');
@@ -211,7 +219,7 @@ export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTran
         <View style={styles.paymentGrid}>
           {ALL_PAYMENT_METHODS.map((method) => {
             const isActive = paymentMethod === method;
-            const color = PAYMENT_METHOD_COLORS[method];
+            const color = getPaymentMethodColor(method);
             return (
               <TouchableOpacity
                 key={method}
@@ -222,17 +230,33 @@ export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTran
                 onPress={() => setPaymentMethod(method)}
               >
                 <Ionicons
-                  name={PAYMENT_METHOD_ICONS[method] as any}
+                  name={getPaymentMethodIcon(method) as any}
                   size={20}
                   color={isActive ? color : '#4b5563'}
                 />
                 <Text style={[styles.paymentText, isActive && { color }]}>
-                  {PAYMENT_METHOD_LABELS[method]}
+                  {getPaymentMethodLabel(method)}
                 </Text>
               </TouchableOpacity>
             );
           })}
+          <TouchableOpacity
+            style={[styles.paymentCard, paymentMethod === 'CUSTOM' && styles.customPaymentActive]}
+            onPress={() => setPaymentMethod('CUSTOM')}
+          >
+            <Ionicons name="add-circle-outline" size={20} color={paymentMethod === 'CUSTOM' ? '#a78bfa' : '#4b5563'} />
+            <Text style={[styles.paymentText, paymentMethod === 'CUSTOM' && styles.customPaymentText]}>Autre plateforme</Text>
+          </TouchableOpacity>
         </View>
+        {paymentMethod === 'CUSTOM' && (
+          <TextInput
+            style={styles.customPlatformInput}
+            placeholder="Nom de la plateforme (ex. TikTok Shop)"
+            placeholderTextColor="#4b5563"
+            value={customPlatform}
+            onChangeText={setCustomPlatform}
+          />
+        )}
       </View>
 
       {/* Description */}
@@ -376,6 +400,9 @@ const styles = StyleSheet.create({
     borderColor: '#1f2937',
   },
   paymentText: { color: '#6b7280', fontSize: 12, fontWeight: '600', flexShrink: 1 },
+  customPaymentActive: { borderColor: '#a78bfa', backgroundColor: '#a78bfa18' },
+  customPaymentText: { color: '#a78bfa' },
+  customPlatformInput: { backgroundColor: '#1f2937', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 13, color: '#f9fafb', fontSize: 14 },
 
   catChip: {
     flexDirection: 'row',
