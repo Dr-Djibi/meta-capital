@@ -26,12 +26,10 @@ export default function SettingsScreen() {
           <Text style={styles.help}>Le taux est récupéré automatiquement en ligne et conservé localement pour continuer à convertir sans réseau.</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Règles de conversion</Text>
-          <View style={styles.rule}><Ionicons name="cube-outline" size={17} color="#f59e0b" /><Text style={styles.ruleText}>Produit, coût fournisseur et fret : USD</Text></View>
-          <View style={styles.rule}><Ionicons name="cart-outline" size={17} color="#34d399" /><Text style={styles.ruleText}>Prix réel de vente et livreur : GNF</Text></View>
-          <View style={styles.rule}><Ionicons name="calculator-outline" size={17} color="#60a5fa" /><Text style={styles.ruleText}>Capital : net de la vente converti en USD</Text></View>
-        </View>
+        <Text style={styles.sectionHeading}>Comment les montants sont utilisés</Text>
+        <View style={styles.ruleCard}><Ionicons name="cube-outline" size={19} color="#f59e0b" /><View><Text style={styles.ruleTitle}>Produits</Text><Text style={styles.ruleText}>Coût fournisseur et fret en USD</Text></View></View>
+        <View style={styles.ruleCard}><Ionicons name="cart-outline" size={19} color="#34d399" /><View><Text style={styles.ruleTitle}>Ventes</Text><Text style={styles.ruleText}>Prix réel et livreur en GNF</Text></View></View>
+        <View style={styles.ruleCard}><Ionicons name="calculator-outline" size={19} color="#60a5fa" /><View><Text style={styles.ruleTitle}>Capital</Text><Text style={styles.ruleText}>Net de la vente converti en USD</Text></View></View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -44,12 +42,14 @@ const styles = StyleSheet.create({
   title: { color: '#f9fafb', fontSize: 27, fontWeight: '800', marginBottom: 6 },
   section: { backgroundColor: '#0f172a', borderRadius: 18, borderWidth: 1, borderColor: '#1f2937', padding: 16, gap: 13 },
   sectionTitle: { color: '#f9fafb', fontSize: 15, fontWeight: '800' },
+  sectionHeading: { color: '#94a3b8', fontSize: 12, fontWeight: '700', marginTop: 4 },
   rateRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   iconBox: { width: 42, height: 42, borderRadius: 12, backgroundColor: '#172554', alignItems: 'center', justifyContent: 'center' },
   rateInfo: { flex: 1, gap: 4 },
   rateValue: { color: '#f9fafb', fontSize: 16, fontWeight: '800' },
   rateMeta: { color: '#64748b', fontSize: 11 },
   help: { color: '#64748b', fontSize: 12, lineHeight: 17 },
-  rule: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  ruleCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#0f172a', borderRadius: 14, borderWidth: 1, borderColor: '#1f2937', padding: 14 },
+  ruleTitle: { color: '#e5e7eb', fontSize: 13, fontWeight: '800', marginBottom: 3 },
   ruleText: { color: '#cbd5e1', fontSize: 13 },
 });

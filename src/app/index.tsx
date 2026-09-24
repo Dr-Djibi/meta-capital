@@ -106,34 +106,24 @@ export default function DashboardScreen() {
             </Text>
           </View>
 
-          <View style={styles.divider} />
+        </View>
 
-          <View style={styles.statsRow}>
-            {/* Dépôts */}
-            <View style={styles.stat}>
-              <View style={styles.statHeader}>
-                <View style={styles.statIconWrap}>
-                  <Ionicons name="arrow-down-circle-outline" size={14} color="#34d399" />
-                </View>
-                <Text style={styles.statLabel}>Dépôts</Text>
-              </View>
-              <Text style={[styles.statValueUSD, styles.positive]}>+{formatUSD(totalIncomeUSD)}</Text>
-              <Text style={styles.statValueGNF}>+{formatGNF(totalIncomeUSD * liveRate)}</Text>
+        <View style={styles.statCardsRow}>
+          <View style={styles.statCard}>
+            <View style={styles.statHeader}>
+              <View style={styles.statIconWrap}><Ionicons name="arrow-down-circle-outline" size={14} color="#34d399" /></View>
+              <Text style={styles.statLabel}>Dépôts</Text>
             </View>
-
-            <View style={styles.statSeparator} />
-
-            {/* Retraits */}
-            <View style={styles.stat}>
-              <View style={styles.statHeader}>
-                <View style={[styles.statIconWrap, styles.statIconExpense]}>
-                  <Ionicons name="arrow-up-circle-outline" size={14} color="#f87171" />
-                </View>
-                <Text style={styles.statLabel}>Retraits</Text>
-              </View>
-              <Text style={[styles.statValueUSD, styles.negative]}>-{formatUSD(totalExpenseUSD)}</Text>
-              <Text style={styles.statValueGNF}>-{formatGNF(totalExpenseUSD * liveRate)}</Text>
+            <Text style={[styles.statValueUSD, styles.positive]}>+{formatUSD(totalIncomeUSD)}</Text>
+            <Text style={styles.statValueGNF}>+{formatGNF(totalIncomeUSD * liveRate)}</Text>
+          </View>
+          <View style={styles.statCard}>
+            <View style={styles.statHeader}>
+              <View style={[styles.statIconWrap, styles.statIconExpense]}><Ionicons name="arrow-up-circle-outline" size={14} color="#f87171" /></View>
+              <Text style={styles.statLabel}>Retraits</Text>
             </View>
+            <Text style={[styles.statValueUSD, styles.negative]}>-{formatUSD(totalExpenseUSD)}</Text>
+            <Text style={styles.statValueGNF}>-{formatGNF(totalExpenseUSD * liveRate)}</Text>
           </View>
         </View>
 
@@ -310,10 +300,8 @@ const styles = StyleSheet.create({
   positive: { color: '#34d399' },
   negative: { color: '#f87171' },
 
-  divider: { height: 1, backgroundColor: '#1f2937', marginVertical: 18 },
-
-  statsRow: { flexDirection: 'row' },
-  stat: { flex: 1, gap: 5 },
+  statCardsRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  statCard: { flex: 1, backgroundColor: '#0f172a', borderRadius: 14, padding: 13, borderWidth: 1, borderColor: '#1f2937', gap: 5 },
   statHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
   statIconWrap: {
     width: 22,
@@ -327,7 +315,6 @@ const styles = StyleSheet.create({
   statLabel: { color: '#4b5563', fontSize: 12, fontWeight: '600' },
   statValueUSD: { fontSize: 15, fontWeight: '800' },
   statValueGNF: { fontSize: 11, color: '#6b7280', fontWeight: '500' },
-  statSeparator: { width: 1, backgroundColor: '#1f2937', marginHorizontal: 16 },
 
   rateCard: {
     flexDirection: 'row',
