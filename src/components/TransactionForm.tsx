@@ -34,6 +34,7 @@ import {
 } from '@/constants/currency';
 
 const INCOME_CATEGORIES: TransactionCategory[] = [
+  'INITIAL_BALANCE',
   'PERSONAL_FUNDS',
   'FAMILY_SUPPORT',
   'SALES_REVENUE',
@@ -53,9 +54,10 @@ const ALL_PAYMENT_METHODS: PaymentMethod[] = [
 
 interface TransactionFormProps {
   liveRate?: number;
+  onComplete?: () => void;
 }
 
-export function TransactionForm({ liveRate = USD_TO_GNF }: TransactionFormProps) {
+export function TransactionForm({ liveRate = USD_TO_GNF, onComplete }: TransactionFormProps) {
   const addTransaction = useCapitalStore((s) => s.addTransaction);
   const [type, setType] = useState<'INCOME' | 'EXPENSE'>('INCOME');
   const [amount, setAmount] = useState('');
@@ -109,12 +111,14 @@ export function TransactionForm({ liveRate = USD_TO_GNF }: TransactionFormProps)
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setAmount('');
     setDescription('');
+
+    if (onComplete) {
+      setTimeout(onComplete, 300); // slight delay to show the animation before closing
+    }
   };
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Nouvelle opération</Text>
-
       {/* Type toggle — Dépôt / Retrait */}
       <View style={styles.toggle}>
         <TouchableOpacity

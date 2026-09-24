@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Currency, PaymentMethod, toUSD } from '@/constants/currency';
 
 export type TransactionCategory =
+  | 'INITIAL_BALANCE'
   | 'PERSONAL_FUNDS'
   | 'FAMILY_SUPPORT'
   | 'ADVERTISING'
@@ -12,6 +13,7 @@ export type TransactionCategory =
   | 'SALES_REVENUE';
 
 export const CATEGORY_LABELS: Record<TransactionCategory, string> = {
+  INITIAL_BALANCE: 'Capital de départ',
   PERSONAL_FUNDS: 'Fonds propres',
   FAMILY_SUPPORT: 'Aide famille',
   ADVERTISING: 'Meta Ads',
@@ -21,6 +23,7 @@ export const CATEGORY_LABELS: Record<TransactionCategory, string> = {
 };
 
 export const CATEGORY_ICONS: Record<TransactionCategory, string> = {
+  INITIAL_BALANCE: 'star-outline',
   PERSONAL_FUNDS: 'wallet-outline',
   FAMILY_SUPPORT: 'people-outline',
   ADVERTISING: 'megaphone-outline',

@@ -24,7 +24,8 @@ export interface Product {
   imageUri?: string;
   supplierUrl?: string;
   purchasePrice: number;
-  shippingCost: number;
+  weight: number;         // Poids unitaire en kg
+  freightPerKg: number;   // Frais de transitaire par kilo (en USD)
   estimatedCpa: number;
   targetMargin: number; // 0.0 → 1.0
   suggestedPrice: number;
@@ -32,15 +33,18 @@ export interface Product {
 }
 
 /**
- * CUT = purchasePrice + shippingCost + estimatedCpa
+ * Frais port = weight * freightPerKg
+ * CUT = purchasePrice + Frais port + estimatedCpa
  * Prix de vente = CUT / (1 - targetMargin)
  */
 export function calcSuggestedPrice(
   purchasePrice: number,
-  shippingCost: number,
+  weight: number,
+  freightPerKg: number,
   estimatedCpa: number,
   targetMargin: number
 ): number {
+  const shippingCost = weight * freightPerKg;
   const cut = purchasePrice + shippingCost + estimatedCpa;
   if (targetMargin >= 1) return cut;
   return cut / (1 - targetMargin);
@@ -68,7 +72,8 @@ export const useProductStore = create<ProductState>()(
               id: Math.random().toString(36).slice(2),
               suggestedPrice: calcSuggestedPrice(
                 p.purchasePrice,
-                p.shippingCost,
+                p.weight,
+                p.freightPerKg,
                 p.estimatedCpa,
                 p.targetMargin
               ),
@@ -86,7 +91,8 @@ export const useProductStore = create<ProductState>()(
               ...updated,
               suggestedPrice: calcSuggestedPrice(
                 updated.purchasePrice,
-                updated.shippingCost,
+                updated.weight,
+                updated.freightPerKg,
                 updated.estimatedCpa,
                 updated.targetMargin
               ),

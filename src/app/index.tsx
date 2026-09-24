@@ -1,5 +1,5 @@
-import React from 'react';
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useCapitalStore } from '@/store/useCapitalStore';
@@ -15,7 +15,8 @@ export default function DashboardScreen() {
   const getNetCapital = useCapitalStore((s) => s.getNetCapital);
   const transactions = useCapitalStore((s) => s.transactions);
   const { rate: liveRate, loading: rateLoading, lastUpdated, error: rateError } = useExchangeRate();
-  const [showBudgetSettings, setShowBudgetSettings] = React.useState(false);
+  const [showBudgetSettings, setShowBudgetSettings] = useState(false);
+  const [showFormModal, setShowFormModal] = useState(false);
 
   const handleExport = async () => {
     try {
@@ -149,13 +150,37 @@ export default function DashboardScreen() {
         {/* Graphique évolution */}
         {transactions.length >= 2 && <CapitalChart />}
 
-        {/* Formulaire */}
-        <TransactionForm liveRate={liveRate} />
-
-        {/* Liste */}
+        {/* Liste des transactions */}
         <TransactionList liveRate={liveRate} />
-
       </ScrollView>
+
+      {/* FAB pour ajouter une transaction */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setShowFormModal(true)}
+      >
+        <Ionicons name="add" size={30} color="#fff" />
+      </TouchableOpacity>
+
+      {/* Modal Formulaire */}
+      <Modal
+        visible={showFormModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowFormModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Nouvelle opération</Text>
+              <TouchableOpacity onPress={() => setShowFormModal(false)} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            <TransactionForm liveRate={liveRate} onComplete={() => setShowFormModal(false)} />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -262,4 +287,47 @@ const styles = StyleSheet.create({
   rateText: { color: '#6b7280', fontSize: 12, flex: 1 },
   rateHighlight: { color: '#f59e0b', fontWeight: '700' },
   rateTime: { color: '#4b5563', fontWeight: '400' },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#3b82f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#0f172a',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: 40,
+    maxHeight: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    color: '#f9fafb',
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
 });

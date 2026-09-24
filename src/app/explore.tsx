@@ -36,7 +36,8 @@ export default function ProduitsScreen() {
 
   const [title, setTitle] = useState('');
   const [purchasePrice, setPurchasePrice] = useState('');
-  const [shippingCost, setShippingCost] = useState('');
+  const [weight, setWeight] = useState('');
+  const [freightPerKg, setFreightPerKg] = useState('15'); // 15$ par défaut
   const [estimatedCpa, setEstimatedCpa] = useState('4');
   const [targetMargin, setTargetMargin] = useState('40');
   const [supplierUrl, setSupplierUrl] = useState('');
@@ -46,7 +47,8 @@ export default function ProduitsScreen() {
 
   const previewPrice = calcSuggestedPrice(
     f(purchasePrice),
-    f(shippingCost),
+    f(weight),
+    f(freightPerKg),
     f(estimatedCpa),
     f(targetMargin) / 100
   );
@@ -64,7 +66,8 @@ export default function ProduitsScreen() {
   const resetForm = () => {
     setTitle('');
     setPurchasePrice('');
-    setShippingCost('');
+    setWeight('');
+    setFreightPerKg('15');
     setEstimatedCpa('4');
     setTargetMargin('40');
     setSupplierUrl('');
@@ -84,7 +87,8 @@ export default function ProduitsScreen() {
     addProduct({
       title: title.trim(),
       purchasePrice: f(purchasePrice),
-      shippingCost: f(shippingCost),
+      weight: f(weight),
+      freightPerKg: f(freightPerKg),
       estimatedCpa: f(estimatedCpa),
       targetMargin: f(targetMargin) / 100,
       supplierUrl: supplierUrl.trim() || undefined,
@@ -155,8 +159,8 @@ export default function ProduitsScreen() {
               />
             </View>
 
-            {/* Prix ligne 1 */}
-            <View style={styles.row3}>
+            {/* Prix & Poids (Ligne 1) */}
+            <View style={styles.row2}>
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Prix achat</Text>
                 <View style={styles.inputWrapperSmall}>
@@ -172,21 +176,39 @@ export default function ProduitsScreen() {
                 </View>
               </View>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Frais port</Text>
+                <Text style={styles.inputLabel}>Poids</Text>
                 <View style={styles.inputWrapperSmall}>
                   <TextInput
                     style={styles.inputSmall}
                     keyboardType="decimal-pad"
-                    value={shippingCost}
-                    onChangeText={setShippingCost}
+                    value={weight}
+                    onChangeText={setWeight}
                     placeholder="0.00"
+                    placeholderTextColor="#4b5563"
+                  />
+                  <Text style={styles.unit}>kg</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Transitaire & CPA (Ligne 2) */}
+            <View style={styles.row2}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Frais/kg (Transitaire)</Text>
+                <View style={styles.inputWrapperSmall}>
+                  <TextInput
+                    style={styles.inputSmall}
+                    keyboardType="decimal-pad"
+                    value={freightPerKg}
+                    onChangeText={setFreightPerKg}
+                    placeholder="15.00"
                     placeholderTextColor="#4b5563"
                   />
                   <Text style={styles.unit}>$</Text>
                 </View>
               </View>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>CPA Meta</Text>
+                <Text style={styles.inputLabel}>CPA Meta (Estimé)</Text>
                 <View style={styles.inputWrapperSmall}>
                   <TextInput
                     style={styles.inputSmall}
@@ -201,7 +223,7 @@ export default function ProduitsScreen() {
               </View>
             </View>
 
-            {/* Marge + Prix conseillé */}
+            {/* Marge + Prix conseillé (Ligne 3) */}
             <View style={styles.row2}>
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Marge cible</Text>
@@ -218,7 +240,7 @@ export default function ProduitsScreen() {
                 </View>
               </View>
               <View style={[styles.inputGroup, styles.pricePreviewBox]}>
-                <Text style={styles.inputLabel}>Prix conseillé</Text>
+                <Text style={styles.inputLabel}>Prix de vente conseillé</Text>
                 <Text style={styles.previewPrice}>{previewPrice.toFixed(2)} $</Text>
               </View>
             </View>
@@ -285,8 +307,8 @@ export default function ProduitsScreen() {
               </View>
               <Ionicons name="add" size={14} color="#374151" />
               <View style={styles.priceCol}>
-                <Text style={styles.priceLabel}>Port</Text>
-                <Text style={styles.priceVal}>{p.shippingCost.toFixed(2)} $</Text>
+                <Text style={styles.priceLabel}>Port ({p.weight}kg)</Text>
+                <Text style={styles.priceVal}>{(p.weight * p.freightPerKg).toFixed(2)} $</Text>
               </View>
               <Ionicons name="add" size={14} color="#374151" />
               <View style={styles.priceCol}>
