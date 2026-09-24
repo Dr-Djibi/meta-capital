@@ -1,0 +1,80 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Compilation de l'APK Android
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Configuration de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Configuration de Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            android/.gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Installation des dépendances
+        run: npm ci
+
+      - name: Génération du projet Android
+        run: npx expo prebuild --platform android --clean --non-interactive
+
+      - name: Compilation de l'APK release
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Renommage de l'APK
+        run: mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/meta-capital.apk
+
+      - name: Sauvegarde de l'APK généré
+        uses: actions/upload-artifact@v4
+        with:
+          name: Meta-Capital-Android
+          path: android/app/build/outputs/apk/release/meta-capital.apk
+
+      - name: Création de la release GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Meta Capital v${{ github.run_number }}
+          body: Build automatique - commit ${{ github.sha }}
+          files: android/app/build/outputs/apk/release/meta-capital.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
