@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useProductStore } from '@/store/useProductStore';
+import { calcSuggestedPrice, useProductStore } from '@/store/useProductStore';
+import { USD_TO_GNF } from '@/constants/currency';
 import { useCapitalStore } from '@/store/useCapitalStore';
 import { useExchangeRate } from '@/hooks/use-exchange-rate';
 import { PaymentMethod, PAYMENT_METHOD_COLORS, PAYMENT_METHOD_ICONS, PAYMENT_METHOD_LABELS } from '@/constants/currency';
@@ -13,7 +14,7 @@ const numberValue = (value: string) => parseFloat(value.replace(',', '.')) || 0;
 export default function SalesScreen() {
   const products = useProductStore((state) => state.products);
   const addTransaction = useCapitalStore((state) => state.addTransaction);
-  const { rate, loading, error } = useExchangeRate();
+  const { rate } = useExchangeRate();
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [salePrice, setSalePrice] = useState('');
   const [deliveryFee, setDeliveryFee] = useState('');
@@ -24,11 +25,30 @@ export default function SalesScreen() {
   const grossGNF = numberValue(salePrice) * Math.max(1, Math.floor(numberValue(quantity)));
   const deliveryGNF = numberValue(deliveryFee) * Math.max(1, Math.floor(numberValue(quantity)));
   const netGNF = Math.max(0, grossGNF - deliveryGNF);
+  const productFreightGNF = selectedProduct?.freightPerKgGNF ?? (selectedProduct?.freightPerKg ?? 0) * USD_TO_GNF;
+  const productAdBudgetUSD = selectedProduct?.dailyAdBudgetUSD ?? (selectedProduct?.dailyAdBudgetGNF !== undefined ? selectedProduct.dailyAdBudgetGNF / USD_TO_GNF : selectedProduct?.estimatedCpa ?? 0);
+  const productAdDays = selectedProduct?.adDays ?? 1;
+  const productCostUSD = selectedProduct
+    ? selectedProduct.purchasePrice + (selectedProduct.weight * productFreightGNF) / rate + productAdBudgetUSD * productAdDays
+    : 0;
+  const profitUSD = netGNF / rate - productCostUSD * Math.max(1, Math.floor(numberValue(quantity)));
+  const profitMargin = netGNF > 0 && selectedProduct ? (profitUSD / (netGNF / rate)) * 100 : null;
 
   const selectProduct = (id: string) => {
     const product = products.find((item) => item.id === id);
     setSelectedProductId(id);
-    if (product) setSalePrice(Math.round(product.suggestedPrice * rate).toString());
+    if (product) {
+      const suggestedPrice = calcSuggestedPrice(
+        product.purchasePrice,
+        product.weight,
+        product.freightPerKgGNF ?? (product.freightPerKg ?? 0) * USD_TO_GNF,
+        product.dailyAdBudgetUSD ?? (product.dailyAdBudgetGNF !== undefined ? product.dailyAdBudgetGNF / USD_TO_GNF : product.estimatedCpa ?? 0),
+        product.adDays ?? 1,
+        product.targetMargin,
+        rate
+      );
+      setSalePrice(Math.round(suggestedPrice * rate).toString());
+    }
   };
 
   const handleSale = () => {
@@ -63,11 +83,6 @@ export default function SalesScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.subtitle}>Journal commercial</Text>
         <Text style={styles.title}>Ventes du jour</Text>
-        <View style={styles.rateBar}>
-          <Ionicons name={error ? 'warning-outline' : 'sync-outline'} size={15} color={error ? '#f87171' : '#f59e0b'} />
-          <Text style={styles.rateText}>{loading ? 'Mise à jour du taux…' : `1 USD = ${Math.round(rate).toLocaleString('fr-FR')} GNF`}</Text>
-        </View>
-
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Quel produit as-tu vendu ?</Text>
           {products.length === 0 ? (
@@ -109,10 +124,13 @@ export default function SalesScreen() {
             <View style={styles.inputWrap}><TextInput style={styles.input} value={deliveryFee} onChangeText={setDeliveryFee} keyboardType="number-pad" placeholder="0" placeholderTextColor="#4b5563" /><Text style={styles.unit}>GNF / unité</Text></View>
           </View>
 
+          {selectedProduct && <Text style={styles.suggestion}>Prix conseillé indicatif : {Math.round(calcSuggestedPrice(selectedProduct.purchasePrice, selectedProduct.weight, productFreightGNF, productAdBudgetUSD, productAdDays, selectedProduct.targetMargin, rate) * rate).toLocaleString('fr-FR')} GNF. Tu peux choisir n’importe quel autre prix.</Text>}
+
           <View style={styles.netBox}>
             <View><Text style={styles.netLabel}>Net ajouté au capital</Text><Text style={styles.netHint}>Après déduction du livreur</Text></View>
             <View><Text style={styles.netValue}>{Math.round(netGNF).toLocaleString('fr-FR')} GNF</Text><Text style={styles.netUsd}>≈ {(netGNF / rate).toFixed(2)} $</Text></View>
           </View>
+          {profitMargin !== null && <View style={styles.profitRow}><Text style={styles.profitLabel}>Bénéfice estimé après coûts</Text><Text style={[styles.profitValue, { color: profitUSD >= 0 ? '#34d399' : '#f87171' }]}>{profitUSD >= 0 ? '+' : ''}{profitUSD.toFixed(2)} $ · marge {profitMargin.toFixed(1)}%</Text></View>}
 
           <Text style={styles.label}>Paiement reçu par</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.paymentRow}>
@@ -139,6 +157,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#0f172a', borderRadius: 18, borderWidth: 1, borderColor: '#1f2937', padding: 16, gap: 12 },
   sectionTitle: { color: '#f9fafb', fontSize: 15, fontWeight: '800' },
   helper: { color: '#64748b', fontSize: 12, lineHeight: 17 },
+  suggestion: { color: '#60a5fa', fontSize: 11, lineHeight: 16 },
   muted: { color: '#64748b', fontSize: 13 },
   productRow: { gap: 7 },
   productChip: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: 190, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 11, backgroundColor: '#111827', borderWidth: 1, borderColor: '#1f2937' },
@@ -157,6 +176,9 @@ const styles = StyleSheet.create({
   netHint: { color: '#5eead4', fontSize: 10, marginTop: 3 },
   netValue: { color: '#5eead4', fontSize: 18, fontWeight: '800', textAlign: 'right' },
   netUsd: { color: '#99f6e4', fontSize: 11, textAlign: 'right', marginTop: 2 },
+  profitRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#111827', borderRadius: 10, padding: 11 },
+  profitLabel: { color: '#94a3b8', fontSize: 11 },
+  profitValue: { fontSize: 12, fontWeight: '800' },
   paymentRow: { gap: 7 },
   paymentChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10, backgroundColor: '#111827', borderWidth: 1, borderColor: '#1f2937' },
   submit: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: '#0f766e', borderRadius: 12, paddingVertical: 14 },

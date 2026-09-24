@@ -203,11 +203,14 @@ src/
 - Dashboard avec capital global, résumé du mois, taux de change, budgets, graphique et export CSV.
 - Transactions : ajout, recherche, filtres dépôts/retraits, suppression par swipe et modification depuis l’icône crayon.
 - Produits : ajout avec photo, calcul du prix conseillé, statuts, recherche, filtres par statut et enregistrement des ventes.
+- Produits : affichage séparé du prix de revient unitaire, du prix de vente unitaire conseillé et de la quantité en stock.
 - Ventes : écran dédié pour saisir le prix réellement payé en GNF, le livreur en GNF, la quantité et le moyen de paiement.
+- Le prix d’achat produit et le budget publicitaire quotidien restent en USD, le transitaire est en GNF avec une durée publicitaire en jours.
 - Le prix conseillé d’un produit est indicatif et indépendant du prix réel de vente.
 - Le montant ajouté au capital est calculé automatiquement avec `(prix réel GNF - livreur GNF) × quantité`, puis converti en USD avec le taux live.
 - Graphique : affichage responsive des 12 dernières opérations, tendance, grille et solde cumulé historique.
 - Navigation : quatre espaces `Capital`, `Produits`, `Ventes` et `Paramètres`.
+- Le taux live est affiché uniquement dans `Paramètres`; les autres écrans l’utilisent en arrière-plan pour les calculs.
 - `GestureHandlerRootView` installé dans le layout racine pour rendre les gestes fiables sur Android.
 
 ### Corrections TypeScript

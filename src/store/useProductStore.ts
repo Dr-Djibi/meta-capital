@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { USD_TO_GNF } from '@/constants/currency';
 
 export type ProductStatus = 'DRAFT' | 'ORDERED' | 'IN_STOCK' | 'ARCHIVED';
 
@@ -24,33 +25,56 @@ export interface Product {
   imageUri?: string;
   supplierUrl?: string;
   purchasePrice: number;
+  quantity: number;
   weight: number;         // Poids unitaire en kg
-  freightPerKg: number;   // Frais de transitaire par kilo (en USD)
-  estimatedCpa: number;
+  freightPerKgGNF: number; // Frais de transitaire par kilo (en GNF)
+  dailyAdBudgetUSD: number; // Budget publicitaire quotidien (en USD)
+  adDays: number;
+  /** Champs legacy conservés pour lire les anciens produits déjà persistés. */
+  freightPerKg?: number;
+  estimatedCpa?: number;
+  dailyAdBudgetGNF?: number;
   targetMargin: number; // 0.0 → 1.0
   suggestedPrice: number;
   status: ProductStatus;
 }
 
 /**
- * Frais port = weight * freightPerKg
- * CUT = purchasePrice + Frais port + estimatedCpa
+ * Frais transitaire USD = weight * freightPerKgGNF / taux
+ * Budget publicitaire USD = dailyAdBudgetUSD * adDays
+ * CUT = purchasePrice + Frais transitaire + Budget publicitaire
  * Prix de vente = CUT / (1 - targetMargin)
  */
 export function calcSuggestedPrice(
   purchasePrice: number,
   weight: number,
-  freightPerKg: number,
-  estimatedCpa: number,
-  targetMargin: number
+  freightPerKgGNF: number,
+  dailyAdBudgetUSD: number,
+  adDays: number,
+  targetMargin: number,
+  usdToGnf = USD_TO_GNF
 ): number {
-  const shippingCost = weight * freightPerKg;
-  const cut = purchasePrice + shippingCost + estimatedCpa;
+  const shippingCost = (weight * freightPerKgGNF) / usdToGnf;
+  const advertisingCost = dailyAdBudgetUSD * adDays;
+  const cut = purchasePrice + shippingCost + advertisingCost;
   if (targetMargin >= 1) return cut;
   return cut / (1 - targetMargin);
 }
 
 type ProductInput = Omit<Product, 'id' | 'suggestedPrice'>;
+
+function normalizeProductInput(product: ProductInput): ProductInput {
+  const legacyAdBudgetUSD = product.dailyAdBudgetGNF !== undefined
+    ? product.dailyAdBudgetGNF / USD_TO_GNF
+    : product.estimatedCpa ?? 0;
+  return {
+    ...product,
+    freightPerKgGNF: product.freightPerKgGNF ?? (product.freightPerKg ?? 0) * USD_TO_GNF,
+    dailyAdBudgetUSD: product.dailyAdBudgetUSD ?? legacyAdBudgetUSD,
+    adDays: product.adDays ?? 1,
+    quantity: product.quantity ?? 0,
+  };
+}
 
 interface ProductState {
   products: Product[];
@@ -65,35 +89,46 @@ export const useProductStore = create<ProductState>()(
       products: [],
 
       addProduct: (p) =>
-        set((s) => ({
+        set((s) => {
+          const normalized = normalizeProductInput(p);
+          return {
           products: [
             {
-              ...p,
+              ...normalized,
               id: Math.random().toString(36).slice(2),
               suggestedPrice: calcSuggestedPrice(
-                p.purchasePrice,
-                p.weight,
-                p.freightPerKg,
-                p.estimatedCpa,
-                p.targetMargin
+                normalized.purchasePrice,
+                normalized.weight,
+                normalized.freightPerKgGNF,
+                normalized.dailyAdBudgetUSD,
+                normalized.adDays,
+                normalized.targetMargin
               ),
             },
             ...s.products,
           ],
-        })),
+          };
+        }),
 
       updateProduct: (id, updates) =>
         set((s) => ({
           products: s.products.map((p) => {
             if (p.id !== id) return p;
             const updated = { ...p, ...updates };
+            const freightPerKgGNF = updated.freightPerKgGNF ?? (updated.freightPerKg ?? 0) * USD_TO_GNF;
+            const dailyAdBudgetUSD = updated.dailyAdBudgetUSD ?? (updated.dailyAdBudgetGNF !== undefined ? updated.dailyAdBudgetGNF / USD_TO_GNF : updated.estimatedCpa ?? 0);
+            const adDays = updated.adDays ?? 1;
             return {
               ...updated,
+              freightPerKgGNF,
+              dailyAdBudgetUSD,
+              adDays,
               suggestedPrice: calcSuggestedPrice(
                 updated.purchasePrice,
                 updated.weight,
-                updated.freightPerKg,
-                updated.estimatedCpa,
+                freightPerKgGNF,
+                dailyAdBudgetUSD,
+                adDays,
                 updated.targetMargin
               ),
             };

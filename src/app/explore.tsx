@@ -15,11 +15,14 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import {
   useProductStore,
+  Product,
   ProductStatus,
   STATUS_LABELS,
   STATUS_ICONS,
   calcSuggestedPrice,
 } from '@/store/useProductStore';
+import { USD_TO_GNF } from '@/constants/currency';
+import { useExchangeRate } from '@/hooks/use-exchange-rate';
 
 const STATUSES: ProductStatus[] = ['DRAFT', 'ORDERED', 'IN_STOCK', 'ARCHIVED'];
 
@@ -30,29 +33,47 @@ const STATUS_COLORS: Record<ProductStatus, string> = {
   ARCHIVED: '#1f2937',
 };
 
+function getProductCostUSD(product: Product, rate: number) {
+  const freightGNF = product.freightPerKgGNF ?? (product.freightPerKg ?? 0) * USD_TO_GNF;
+  const dailyBudgetUSD = getDailyAdBudgetUSD(product);
+  return product.purchasePrice + (product.weight * freightGNF) / rate + dailyBudgetUSD * (product.adDays ?? 1);
+}
+
+function getDailyAdBudgetUSD(product: Product) {
+  if (product.dailyAdBudgetUSD !== undefined) return product.dailyAdBudgetUSD;
+  if (product.dailyAdBudgetGNF !== undefined) return product.dailyAdBudgetGNF / USD_TO_GNF;
+  return product.estimatedCpa ?? 0;
+}
+
 export default function ProduitsScreen() {
   const { products, addProduct, deleteProduct, updateProduct } = useProductStore();
+  const { rate } = useExchangeRate();
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProductStatus | 'ALL'>('ALL');
 
   const [title, setTitle] = useState('');
   const [purchasePrice, setPurchasePrice] = useState('');
+  const [quantity, setQuantity] = useState('1');
   const [weight, setWeight] = useState('');
-  const [freightPerKg, setFreightPerKg] = useState('15'); // 15$ par défaut
-  const [estimatedCpa, setEstimatedCpa] = useState('4');
+  const [freightPerKgGNF, setFreightPerKgGNF] = useState('100000');
+  const [dailyAdBudgetUSD, setDailyAdBudgetUSD] = useState('5');
+  const [adDays, setAdDays] = useState('7');
   const [targetMargin, setTargetMargin] = useState('40');
   const [supplierUrl, setSupplierUrl] = useState('');
   const [imageUri, setImageUri] = useState<string | undefined>();
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const f = (v: string) => parseFloat(v.replace(',', '.')) || 0;
 
   const previewPrice = calcSuggestedPrice(
     f(purchasePrice),
     f(weight),
-    f(freightPerKg),
-    f(estimatedCpa),
-    f(targetMargin) / 100
+    f(freightPerKgGNF),
+    f(dailyAdBudgetUSD),
+    f(adDays),
+    f(targetMargin) / 100,
+    rate
   );
 
   const filteredProducts = products.filter((product) => {
@@ -74,13 +95,31 @@ export default function ProduitsScreen() {
   const resetForm = () => {
     setTitle('');
     setPurchasePrice('');
+    setQuantity('1');
     setWeight('');
-    setFreightPerKg('15');
-    setEstimatedCpa('4');
+    setFreightPerKgGNF('100000');
+    setDailyAdBudgetUSD('5');
+    setAdDays('7');
     setTargetMargin('40');
     setSupplierUrl('');
     setImageUri(undefined);
+    setEditingProduct(null);
     setShowForm(false);
+  };
+
+  const editProduct = (product: Product) => {
+    setEditingProduct(product);
+    setTitle(product.title);
+    setPurchasePrice(product.purchasePrice.toString());
+    setQuantity((product.quantity ?? 0).toString());
+    setWeight(product.weight.toString());
+    setFreightPerKgGNF((product.freightPerKgGNF ?? (product.freightPerKg ?? 0) * USD_TO_GNF).toString());
+    setDailyAdBudgetUSD(getDailyAdBudgetUSD(product).toString());
+    setAdDays((product.adDays ?? 1).toString());
+    setTargetMargin((product.targetMargin * 100).toString());
+    setSupplierUrl(product.supplierUrl ?? '');
+    setImageUri(product.imageUri);
+    setShowForm(true);
   };
 
   const handleAdd = () => {
@@ -92,17 +131,21 @@ export default function ProduitsScreen() {
       Alert.alert('Champ requis', 'Le prix d\'achat est obligatoire.');
       return;
     }
-    addProduct({
+    const productData = {
       title: title.trim(),
       purchasePrice: f(purchasePrice),
+      quantity: Math.max(0, Math.floor(f(quantity))),
       weight: f(weight),
-      freightPerKg: f(freightPerKg),
-      estimatedCpa: f(estimatedCpa),
+      freightPerKgGNF: f(freightPerKgGNF),
+      dailyAdBudgetUSD: f(dailyAdBudgetUSD),
+      adDays: Math.max(1, Math.floor(f(adDays))),
       targetMargin: f(targetMargin) / 100,
       supplierUrl: supplierUrl.trim() || undefined,
       imageUri,
-      status: 'DRAFT',
-    });
+      status: editingProduct?.status ?? 'DRAFT',
+    };
+    if (editingProduct) updateProduct(editingProduct.id, productData);
+    else addProduct(productData);
     resetForm();
   };
 
@@ -127,7 +170,7 @@ export default function ProduitsScreen() {
         {/* Form */}
         {showForm && (
           <View style={styles.form}>
-            <Text style={styles.formTitle}>Nouveau produit</Text>
+            <Text style={styles.formTitle}>{editingProduct ? 'Modifier le produit' : 'Nouveau produit'}</Text>
 
             {/* Image picker */}
             <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
@@ -197,37 +240,59 @@ export default function ProduitsScreen() {
                   <Text style={styles.unit}>kg</Text>
                 </View>
               </View>
+              <View style={styles.inputGroupQuantity}>
+                <Text style={styles.inputLabel}>Quantité</Text>
+                <View style={styles.inputWrapperSmall}>
+                  <TextInput style={styles.inputSmall} keyboardType="number-pad" value={quantity} onChangeText={setQuantity} placeholder="1" placeholderTextColor="#4b5563" />
+                  <Text style={styles.unit}>unités</Text>
+                </View>
+              </View>
             </View>
 
-            {/* Transitaire & CPA (Ligne 2) */}
+            {/* Transitaire en GNF */}
             <View style={styles.row2}>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Frais/kg (Transitaire)</Text>
+                <Text style={styles.inputLabel}>Transitaire / kg</Text>
                 <View style={styles.inputWrapperSmall}>
                   <TextInput
                     style={styles.inputSmall}
                     keyboardType="decimal-pad"
-                    value={freightPerKg}
-                    onChangeText={setFreightPerKg}
-                    placeholder="15.00"
+                    value={freightPerKgGNF}
+                    onChangeText={setFreightPerKgGNF}
+                    placeholder="100000"
                     placeholderTextColor="#4b5563"
                   />
-                  <Text style={styles.unit}>$</Text>
+                  <Text style={styles.unit}>GNF/kg</Text>
                 </View>
               </View>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>CPA Meta (Estimé)</Text>
+                <Text style={styles.inputLabel}>Budget pub / jour</Text>
                 <View style={styles.inputWrapperSmall}>
                   <TextInput
                     style={styles.inputSmall}
                     keyboardType="decimal-pad"
-                    value={estimatedCpa}
-                    onChangeText={setEstimatedCpa}
-                    placeholder="4.00"
+                    value={dailyAdBudgetUSD}
+                    onChangeText={setDailyAdBudgetUSD}
+                    placeholder="5"
                     placeholderTextColor="#4b5563"
                   />
-                  <Text style={styles.unit}>$</Text>
+                  <Text style={styles.unit}>$ / jour</Text>
                 </View>
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Durée de publicité</Text>
+              <View style={styles.inputWrapperSmall}>
+                <TextInput
+                  style={styles.inputSmall}
+                  keyboardType="number-pad"
+                  value={adDays}
+                  onChangeText={setAdDays}
+                  placeholder="7"
+                  placeholderTextColor="#4b5563"
+                />
+                <Text style={styles.unit}>jours</Text>
               </View>
             </View>
 
@@ -255,7 +320,7 @@ export default function ProduitsScreen() {
 
             <TouchableOpacity style={styles.submitBtn} onPress={handleAdd}>
               <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
-              <Text style={styles.submitText}>Enregistrer le produit</Text>
+              <Text style={styles.submitText}>{editingProduct ? 'Enregistrer les modifications' : 'Enregistrer le produit'}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -337,6 +402,9 @@ export default function ProduitsScreen() {
                   <Text style={styles.productStatus}>{STATUS_LABELS[p.status]}</Text>
                 </View>
               </View>
+              <TouchableOpacity style={styles.editBtn} onPress={() => editProduct(p)}>
+                <Ionicons name="pencil-outline" size={17} color="#60a5fa" />
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.deleteBtn}
                 onPress={() =>
@@ -350,28 +418,18 @@ export default function ProduitsScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Price breakdown */}
-            <View style={styles.priceBreakdown}>
-              <View style={styles.priceCol}>
-                <Text style={styles.priceLabel}>Achat</Text>
-                <Text style={styles.priceVal}>{p.purchasePrice.toFixed(2)} $</Text>
+            <View style={styles.priceSummary}>
+              <View style={styles.summaryItem}>
+                <Text style={styles.priceLabel}>Prix de revient unitaire</Text>
+                <Text style={styles.costValue}>{getProductCostUSD(p, rate).toFixed(2)} $</Text>
               </View>
-              <Ionicons name="add" size={14} color="#374151" />
-              <View style={styles.priceCol}>
-                <Text style={styles.priceLabel}>Port ({p.weight}kg)</Text>
-                <Text style={styles.priceVal}>{(p.weight * p.freightPerKg).toFixed(2)} $</Text>
+              <View style={styles.summaryItem}>
+                <Text style={styles.priceLabel}>Vente unitaire conseillée</Text>
+                <Text style={styles.priceHighlight}>{calcSuggestedPrice(p.purchasePrice, p.weight, p.freightPerKgGNF ?? (p.freightPerKg ?? 0) * USD_TO_GNF, getDailyAdBudgetUSD(p), p.adDays ?? 1, p.targetMargin, rate).toFixed(2)} $</Text>
               </View>
-              <Ionicons name="add" size={14} color="#374151" />
-              <View style={styles.priceCol}>
-                <Text style={styles.priceLabel}>CPA</Text>
-                <Text style={styles.priceVal}>{p.estimatedCpa.toFixed(2)} $</Text>
-              </View>
-              <Ionicons name="arrow-forward" size={14} color="#374151" />
-              <View style={[styles.priceCol, styles.priceColHighlight]}>
-                <Text style={[styles.priceLabel, { color: '#60a5fa' }]}>
-                  Prix ({(p.targetMargin * 100).toFixed(0)}%)
-                </Text>
-                <Text style={styles.priceHighlight}>{p.suggestedPrice.toFixed(2)} $</Text>
+              <View style={styles.summaryItem}>
+                <Text style={styles.priceLabel}>Quantité</Text>
+                <Text style={styles.quantityValue}>{p.quantity ?? 0}</Text>
               </View>
             </View>
 
@@ -514,6 +572,7 @@ const styles = StyleSheet.create({
   row3: { flexDirection: 'row', gap: 8 },
   row2: { flexDirection: 'row', gap: 8 },
   inputGroup: { flex: 1, gap: 5 },
+  inputGroupQuantity: { flex: 1.1, gap: 5 },
   inputLabel: { color: '#4b5563', fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: '600' },
   inputWrapperSmall: {
     flexDirection: 'row',
@@ -584,21 +643,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  priceBreakdown: {
-    flexDirection: 'row',
+  editBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#172554',
     alignItems: 'center',
-    backgroundColor: '#030712',
-    borderRadius: 10,
-    padding: 12,
-    gap: 8,
-    flexWrap: 'nowrap',
+    justifyContent: 'center',
   },
-  priceCol: { alignItems: 'center', gap: 3 },
-  priceColHighlight: { flex: 1 },
-  priceLabel: { color: '#374151', fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.3 },
-  priceVal: { color: '#9ca3af', fontSize: 13, fontWeight: '600' },
+
+  priceSummary: { flexDirection: 'row', gap: 8 },
+  summaryItem: { flex: 1, backgroundColor: '#030712', borderRadius: 11, padding: 11, gap: 6 },
+  priceLabel: { color: '#64748b', fontSize: 10, lineHeight: 13 },
+  costValue: { color: '#f59e0b', fontSize: 15, fontWeight: '800' },
   priceHighlight: { color: '#60a5fa', fontSize: 16, fontWeight: '800' },
+  quantityValue: { color: '#e5e7eb', fontSize: 16, fontWeight: '800' },
 
   statusRow: { flexDirection: 'row', gap: 6 },
   statusChip: {

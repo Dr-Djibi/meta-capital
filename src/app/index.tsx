@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Modal } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Transaction, useCapitalStore } from '@/store/useCapitalStore';
@@ -14,7 +14,7 @@ import { exportTransactionsToCSV } from '@/utils/exportCsv';
 export default function DashboardScreen() {
   const getNetCapital = useCapitalStore((s) => s.getNetCapital);
   const transactions = useCapitalStore((s) => s.transactions);
-  const { rate: liveRate, loading: rateLoading, lastUpdated, error: rateError } = useExchangeRate();
+  const { rate: liveRate } = useExchangeRate();
   const [showBudgetSettings, setShowBudgetSettings] = useState(false);
   const [showFormModal, setShowFormModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -125,31 +125,6 @@ export default function DashboardScreen() {
             <Text style={[styles.statValueUSD, styles.negative]}>-{formatUSD(totalExpenseUSD)}</Text>
             <Text style={styles.statValueGNF}>-{formatGNF(totalExpenseUSD * liveRate)}</Text>
           </View>
-        </View>
-
-        {/* Bandeau taux de change */}
-        <View style={[styles.rateCard, rateError && styles.rateCardError]}>
-          {rateLoading ? (
-            <>
-              <ActivityIndicator size={12} color="#f59e0b" />
-              <Text style={styles.rateText}>Récupération du taux en cours…</Text>
-            </>
-          ) : (
-            <>
-              <Ionicons
-                name={rateError ? 'warning-outline' : 'trending-up-outline'}
-                size={13}
-                color={rateError ? '#f87171' : '#f59e0b'}
-              />
-              <Text style={styles.rateText}>
-                {rateError ? 'Taux hors ligne · ' : 'Taux live · '}
-                <Text style={[styles.rateHighlight, rateError && { color: '#f87171' }]}>
-                  1 $ = {liveRate.toLocaleString('fr-FR')} GNF
-                </Text>
-                {lastUpdated ? <Text style={styles.rateTime}>  ·  MàJ {lastUpdated}</Text> : null}
-              </Text>
-            </>
-          )}
         </View>
 
         {/* Résumé du mois */}
