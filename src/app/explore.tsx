@@ -33,6 +33,8 @@ const STATUS_COLORS: Record<ProductStatus, string> = {
 export default function ProduitsScreen() {
   const { products, addProduct, deleteProduct, updateProduct } = useProductStore();
   const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<ProductStatus | 'ALL'>('ALL');
 
   const [title, setTitle] = useState('');
   const [purchasePrice, setPurchasePrice] = useState('');
@@ -52,6 +54,12 @@ export default function ProduitsScreen() {
     f(estimatedCpa),
     f(targetMargin) / 100
   );
+
+  const filteredProducts = products.filter((product) => {
+    const matchesStatus = statusFilter === 'ALL' || product.status === statusFilter;
+    const matchesSearch = product.title.toLowerCase().includes(search.trim().toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -252,6 +260,49 @@ export default function ProduitsScreen() {
           </View>
         )}
 
+        {products.length > 0 && (
+          <View style={styles.catalogTools}>
+            <View style={styles.searchWrapper}>
+              <Ionicons name="search-outline" size={16} color="#4b5563" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Rechercher un produit"
+                placeholderTextColor="#4b5563"
+                value={search}
+                onChangeText={setSearch}
+                returnKeyType="search"
+              />
+              {search.length > 0 && (
+                <TouchableOpacity onPress={() => setSearch('')}>
+                  <Ionicons name="close-circle" size={16} color="#6b7280" />
+                </TouchableOpacity>
+              )}
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+              <TouchableOpacity
+                style={[styles.filterChip, statusFilter === 'ALL' && styles.filterChipActive]}
+                onPress={() => setStatusFilter('ALL')}
+              >
+                <Text style={[styles.filterText, statusFilter === 'ALL' && styles.filterTextActive]}>Tous ({products.length})</Text>
+              </TouchableOpacity>
+              {STATUSES.filter((status) => products.some((product) => product.status === status)).map((status) => {
+                const count = products.filter((product) => product.status === status).length;
+                return (
+                  <TouchableOpacity
+                    key={status}
+                    style={[styles.filterChip, statusFilter === status && styles.filterChipActive]}
+                    onPress={() => setStatusFilter(status)}
+                  >
+                    <Text style={[styles.filterText, statusFilter === status && styles.filterTextActive]}>
+                      {STATUS_LABELS[status]} ({count})
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Empty state */}
         {products.length === 0 && !showForm && (
           <View style={styles.empty}>
@@ -264,7 +315,7 @@ export default function ProduitsScreen() {
         )}
 
         {/* Product cards */}
-        {products.map((p) => (
+        {filteredProducts.map((p) => (
           <View key={p.id} style={styles.productCard}>
             {/* Product Header */}
             <View style={styles.productHeader}>
@@ -363,6 +414,14 @@ export default function ProduitsScreen() {
             ) : null}
           </View>
         ))}
+
+        {products.length > 0 && filteredProducts.length === 0 && (
+          <View style={styles.empty}>
+            <Ionicons name="search-outline" size={36} color="#1f2937" />
+            <Text style={styles.emptyTitle}>Aucun produit trouvé</Text>
+            <Text style={styles.emptySubtitle}>Essaie un autre nom ou un autre statut</Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -403,6 +462,30 @@ const styles = StyleSheet.create({
     borderColor: '#1e3a5f',
   },
   formTitle: { color: '#f9fafb', fontSize: 15, fontWeight: '700' },
+  catalogTools: { gap: 10, marginBottom: 14 },
+  searchWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#111827',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+  },
+  searchInput: { flex: 1, paddingVertical: 11, color: '#f9fafb', fontSize: 14 },
+  filterRow: { gap: 6 },
+  filterChip: {
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: '#111827',
+    borderWidth: 1,
+    borderColor: '#1f2937',
+  },
+  filterChipActive: { backgroundColor: '#1e3a5f', borderColor: '#2563eb' },
+  filterText: { color: '#6b7280', fontSize: 12, fontWeight: '600' },
+  filterTextActive: { color: '#dbeafe' },
   imagePicker: {
     backgroundColor: '#111827',
     borderRadius: 12,

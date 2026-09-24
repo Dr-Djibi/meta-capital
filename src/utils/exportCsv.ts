@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Transaction, CATEGORY_LABELS } from '@/store/useCapitalStore';
 import { USD_TO_GNF, PAYMENT_METHOD_LABELS } from '@/constants/currency';
@@ -44,20 +44,17 @@ export async function exportTransactionsToCSV(
     .join('\n');
 
   const csv = `${header}\n${rows}`;
-  const docDir = FileSystem.documentDirectory ?? 'file:///';
   const filename = `meta-capital-${new Date().toISOString().slice(0, 10)}.csv`;
-  const path = docDir + filename;
+  const file = new File(Paths.document, filename);
 
-  await FileSystem.writeAsStringAsync(path, csv, {
-    encoding: FileSystem.EncodingType.UTF8,
-  });
+  file.write(csv);
 
   const canShare = await Sharing.isAvailableAsync();
   if (!canShare) {
     throw new Error('Le partage de fichiers n\'est pas disponible sur cet appareil.');
   }
 
-  await Sharing.shareAsync(path, {
+  await Sharing.shareAsync(file.uri, {
     mimeType: 'text/csv',
     UTI: 'public.comma-separated-values-text',
     dialogTitle: 'Exporter les transactions',

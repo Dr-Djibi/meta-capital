@@ -1,5 +1,5 @@
+import { View, Text, StyleSheet, Alert, TextInput, TouchableOpacity } from 'react-native';
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useAnimatedStyle,
@@ -33,9 +33,10 @@ interface SwipeableRowProps {
   item: Transaction;
   liveRate: number;
   onDelete: () => void;
+  onEdit: () => void;
 }
 
-function SwipeableRow({ item, liveRate, onDelete }: SwipeableRowProps) {
+function SwipeableRow({ item, liveRate, onDelete, onEdit }: SwipeableRowProps) {
   const translateX = useSharedValue(0);
   const rowHeight = useSharedValue<number | 'auto'>('auto');
 
@@ -169,6 +170,9 @@ function SwipeableRow({ item, liveRate, onDelete }: SwipeableRowProps) {
               {sign}{formatGNF(Math.abs(amountGNF))}
             </Text>
           </View>
+          <TouchableOpacity style={styles.editButton} onPress={onEdit}>
+            <Ionicons name="pencil-outline" size={16} color="#60a5fa" />
+          </TouchableOpacity>
         </Animated.View>
       </GestureDetector>
     </View>
@@ -225,9 +229,10 @@ function FilterBar({ active, onChange, counts }: FilterBarProps) {
 
 interface TransactionListProps {
   liveRate?: number;
+  onEdit: (transaction: Transaction) => void;
 }
 
-export function TransactionList({ liveRate = 8600 }: TransactionListProps) {
+export function TransactionList({ liveRate = 8600, onEdit }: TransactionListProps) {
   const transactions = useCapitalStore((s) => s.transactions);
   const deleteTransaction = useCapitalStore((s) => s.deleteTransaction);
   const [filter, setFilter] = React.useState<FilterType>('ALL');
@@ -306,6 +311,7 @@ export function TransactionList({ liveRate = 8600 }: TransactionListProps) {
           item={item}
           liveRate={liveRate}
           onDelete={() => deleteTransaction(item.id)}
+          onEdit={() => onEdit(item)}
         />
       ))}
 
@@ -437,6 +443,14 @@ const styles = StyleSheet.create({
   amountWrap: { alignItems: 'flex-end', gap: 3, flexShrink: 0 },
   amountUSD: { fontSize: 14, fontWeight: '800' },
   amountGNF: { fontSize: 11, color: '#6b7280', fontWeight: '500' },
+  editButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#172554',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   income: { color: '#34d399' },
   expense: { color: '#f87171' },
 

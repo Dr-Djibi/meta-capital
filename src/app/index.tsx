@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useCapitalStore } from '@/store/useCapitalStore';
+import { Transaction, useCapitalStore } from '@/store/useCapitalStore';
 import { TransactionForm } from '@/components/TransactionForm';
 import { TransactionList } from '@/components/TransactionList';
 import { CapitalChart } from '@/components/CapitalChart';
@@ -17,7 +17,17 @@ export default function DashboardScreen() {
   const { rate: liveRate, loading: rateLoading, lastUpdated, error: rateError } = useExchangeRate();
   const [showBudgetSettings, setShowBudgetSettings] = useState(false);
   const [showFormModal, setShowFormModal] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
+  const openNewTransaction = () => {
+    setEditingTransaction(null);
+    setShowFormModal(true);
+  };
+
+  const openEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setShowFormModal(true);
+  };
   const handleExport = async () => {
     try {
       await exportTransactionsToCSV(transactions, liveRate);
@@ -35,6 +45,20 @@ export default function DashboardScreen() {
   const totalExpenseUSD = transactions
     .filter((t) => t.type === 'EXPENSE')
     .reduce((a, t) => a + t.amount, 0);
+
+  const now = new Date();
+  const monthTransactions = transactions.filter((transaction) => {
+    const date = new Date(transaction.date);
+    return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+  });
+  const monthIncomeUSD = monthTransactions
+    .filter((t) => t.type === 'INCOME')
+    .reduce((a, t) => a + t.amount, 0);
+  const monthExpenseUSD = monthTransactions
+    .filter((t) => t.type === 'EXPENSE')
+    .reduce((a, t) => a + t.amount, 0);
+  const monthNetUSD = monthIncomeUSD - monthExpenseUSD;
+  const monthLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
   const isPositive = netCapitalUSD >= 0;
 
@@ -62,9 +86,6 @@ export default function DashboardScreen() {
             >
               <Ionicons name="share-outline" size={20} color="#60a5fa" />
             </TouchableOpacity>
-            <View style={styles.headerIcon}>
-              <Ionicons name="bar-chart-outline" size={22} color="#60a5fa" />
-            </View>
           </View>
         </View>
 
@@ -141,6 +162,35 @@ export default function DashboardScreen() {
           )}
         </View>
 
+        {/* Résumé du mois */}
+        <View style={styles.monthCard}>
+          <View style={styles.monthHeader}>
+            <View>
+              <Text style={styles.monthTitle}>Ce mois-ci</Text>
+              <Text style={styles.monthLabel}>{monthLabel}</Text>
+            </View>
+            <Ionicons name="calendar-outline" size={18} color="#60a5fa" />
+          </View>
+          <View style={styles.monthStats}>
+            <View style={styles.monthStat}>
+              <Text style={styles.monthStatLabel}>Entrées</Text>
+              <Text style={[styles.monthStatValue, styles.positive]}>+{formatUSD(monthIncomeUSD)}</Text>
+            </View>
+            <View style={styles.monthStatDivider} />
+            <View style={styles.monthStat}>
+              <Text style={styles.monthStatLabel}>Sorties</Text>
+              <Text style={[styles.monthStatValue, styles.negative]}>-{formatUSD(monthExpenseUSD)}</Text>
+            </View>
+            <View style={styles.monthStatDivider} />
+            <View style={styles.monthStat}>
+              <Text style={styles.monthStatLabel}>Net</Text>
+              <Text style={[styles.monthStatValue, monthNetUSD >= 0 ? styles.positive : styles.negative]}>
+                {monthNetUSD >= 0 ? '+' : ''}{formatUSD(monthNetUSD)}
+              </Text>
+            </View>
+          </View>
+        </View>
+
         {/* Bannière budget */}
         <BudgetBanner />
 
@@ -151,13 +201,13 @@ export default function DashboardScreen() {
         {transactions.length >= 2 && <CapitalChart />}
 
         {/* Liste des transactions */}
-        <TransactionList liveRate={liveRate} />
+        <TransactionList liveRate={liveRate} onEdit={openEditTransaction} />
       </ScrollView>
 
       {/* FAB pour ajouter une transaction */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => setShowFormModal(true)}
+        onPress={openNewTransaction}
       >
         <Ionicons name="add" size={30} color="#fff" />
       </TouchableOpacity>
@@ -172,12 +222,20 @@ export default function DashboardScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Nouvelle opération</Text>
+              <Text style={styles.modalTitle}>{editingTransaction ? 'Modifier l’opération' : 'Nouvelle opération'}</Text>
               <TouchableOpacity onPress={() => setShowFormModal(false)} style={styles.modalCloseBtn}>
                 <Ionicons name="close" size={24} color="#6b7280" />
               </TouchableOpacity>
             </View>
-            <TransactionForm liveRate={liveRate} onComplete={() => setShowFormModal(false)} />
+            <TransactionForm
+              key={editingTransaction?.id ?? 'new'}
+              liveRate={liveRate}
+              initialTransaction={editingTransaction ?? undefined}
+              onComplete={() => {
+                setShowFormModal(false);
+                setEditingTransaction(null);
+              }}
+            />
           </View>
         </View>
       </Modal>
@@ -287,6 +345,22 @@ const styles = StyleSheet.create({
   rateText: { color: '#6b7280', fontSize: 12, flex: 1 },
   rateHighlight: { color: '#f59e0b', fontWeight: '700' },
   rateTime: { color: '#4b5563', fontWeight: '400' },
+  monthCard: {
+    backgroundColor: '#0f172a',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+  },
+  monthHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  monthTitle: { color: '#e5e7eb', fontSize: 14, fontWeight: '700', textTransform: 'capitalize' },
+  monthLabel: { color: '#6b7280', fontSize: 11, marginTop: 2, textTransform: 'capitalize' },
+  monthStats: { flexDirection: 'row', alignItems: 'center' },
+  monthStat: { flex: 1, gap: 4 },
+  monthStatLabel: { color: '#6b7280', fontSize: 11 },
+  monthStatValue: { fontSize: 13, fontWeight: '800' },
+  monthStatDivider: { width: 1, height: 28, backgroundColor: '#1f2937', marginHorizontal: 10 },
   fab: {
     position: 'absolute',
     bottom: 90,

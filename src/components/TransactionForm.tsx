@@ -22,6 +22,7 @@ import {
   TransactionCategory,
   CATEGORY_LABELS,
   CATEGORY_ICONS,
+  Transaction,
 } from '@/store/useCapitalStore';
 import {
   Currency,
@@ -55,16 +56,18 @@ const ALL_PAYMENT_METHODS: PaymentMethod[] = [
 interface TransactionFormProps {
   liveRate?: number;
   onComplete?: () => void;
+  initialTransaction?: Transaction;
 }
 
-export function TransactionForm({ liveRate = USD_TO_GNF, onComplete }: TransactionFormProps) {
+export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTransaction }: TransactionFormProps) {
   const addTransaction = useCapitalStore((s) => s.addTransaction);
-  const [type, setType] = useState<'INCOME' | 'EXPENSE'>('INCOME');
-  const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState<Currency>('USD');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<TransactionCategory>('PERSONAL_FUNDS');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('ORANGE_MONEY');
+  const updateTransaction = useCapitalStore((s) => s.updateTransaction);
+  const [type, setType] = useState<'INCOME' | 'EXPENSE'>(initialTransaction?.type ?? 'INCOME');
+  const [amount, setAmount] = useState(initialTransaction?.originalAmount.toString() ?? '');
+  const [currency, setCurrency] = useState<Currency>(initialTransaction?.currency ?? 'USD');
+  const [description, setDescription] = useState(initialTransaction?.description ?? '');
+  const [category, setCategory] = useState<TransactionCategory>(initialTransaction?.category ?? 'PERSONAL_FUNDS');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(initialTransaction?.paymentMethod ?? 'ORANGE_MONEY');
 
   const categories = type === 'INCOME' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
@@ -94,7 +97,7 @@ export function TransactionForm({ liveRate = USD_TO_GNF, onComplete }: Transacti
       return;
     }
     const amountInUSD = toUSD(parsed, currency);
-    addTransaction({
+    const transactionData = {
       amount: amountInUSD,
       currency,
       originalAmount: parsed,
@@ -102,7 +105,12 @@ export function TransactionForm({ liveRate = USD_TO_GNF, onComplete }: Transacti
       category,
       paymentMethod,
       description,
-    });
+    };
+    if (initialTransaction) {
+      updateTransaction(initialTransaction.id, transactionData);
+    } else {
+      addTransaction(transactionData);
+    }
     // Animation de succès
     submitScale.value = withSequence(
       withTiming(0.93, { duration: 80 }),

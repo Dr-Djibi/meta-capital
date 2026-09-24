@@ -191,3 +191,45 @@ src/
     ├── useCapitalStore.ts  ← État transactions (Zustand)
     └── useProductStore.ts  ← État produits (Zustand)
 ```
+
+## 9. État technique au 24 septembre 2026
+
+### Fonctionnalités désormais disponibles
+
+- Dashboard avec capital global, résumé du mois, taux de change, budgets, graphique et export CSV.
+- Transactions : ajout, recherche, filtres dépôts/retraits, suppression par swipe et modification depuis l’icône crayon.
+- Produits : ajout avec photo, calcul du prix conseillé, statuts, recherche et filtres par statut.
+- `GestureHandlerRootView` installé dans le layout racine pour rendre les gestes fiables sur Android.
+
+### Corrections TypeScript
+
+- Les imports CSS sont déclarés dans `src/types.d.ts` pour les fichiers globaux et CSS Modules.
+- L’export CSV utilise l’API Expo SDK 57 : `Paths.document`, `File` et `file.write()`.
+- Vérification locale : `npx tsc --noEmit` doit maintenant passer.
+
+### Récupérer les changements Git sur une autre machine
+
+Après un push depuis cette machine :
+
+```bash
+git pull --rebase origin main
+npm install
+npx expo start
+```
+
+Pour une première récupération :
+
+```bash
+git clone https://github.com/Dr-Djibi/meta-capital.git
+cd meta-capital
+npm install
+npx expo start
+```
+
+Si des modifications locales empêchent le pull, les mettre temporairement de côté :
+
+```bash
+git stash push -m "travail local"
+git pull --rebase origin main
+git stash pop
+```
