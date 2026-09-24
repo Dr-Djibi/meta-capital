@@ -96,7 +96,7 @@ export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTran
       Alert.alert('Montant invalide', 'Entre un montant positif.');
       return;
     }
-    const amountInUSD = toUSD(parsed, currency);
+    const amountInUSD = toUSD(parsed, currency, liveRate);
     const transactionData = {
       amount: amountInUSD,
       currency,

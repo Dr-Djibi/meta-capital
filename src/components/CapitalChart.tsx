@@ -1,181 +1,109 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { useWindowDimensions, View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useCapitalStore } from '@/store/useCapitalStore';
+import { formatUSD } from '@/constants/currency';
 
-const CHART_HEIGHT = 80;
-const CHART_WIDTH = 300;
-const POINTS = 12; // Afficher les 12 dernières transactions max
+const CHART_HEIGHT = 148;
+const POINTS = 12;
 
-/**
- * Graphique SVG "sparkline" d'évolution du capital net.
- * Rendu en pur JS/SVG inline — aucune dépendance externe.
- */
 export function CapitalChart() {
-  const transactions = useCapitalStore((s) => s.transactions);
-
+  const transactions = useCapitalStore((state) => state.transactions);
+  const { width: windowWidth } = useWindowDimensions();
+  const chartWidth = Math.max(220, windowWidth - 64);
   const dataPoints = useMemo(() => {
-    if (transactions.length === 0) return [];
-
-    // Prendre les N dernières transactions (ordre chronologique)
-    const sorted = [...transactions]
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(-POINTS);
-
-    // Calculer le capital cumulé à chaque étape
+    const sorted = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     let running = 0;
-    return sorted.map((t) => {
-      running += t.type === 'INCOME' ? t.amount : -t.amount;
+    const history = sorted.map((transaction) => {
+      running += transaction.type === 'INCOME' ? transaction.amount : -transaction.amount;
       return running;
     });
+    return history.slice(-POINTS);
   }, [transactions]);
 
   if (dataPoints.length < 2) return null;
 
+  const firstValue = dataPoints[0];
+  const currentValue = dataPoints[dataPoints.length - 1];
+  const change = currentValue - firstValue;
+  const trendUp = change >= 0;
+  const lineColor = currentValue >= 0 ? '#34d399' : '#f87171';
   const min = Math.min(...dataPoints, 0);
   const max = Math.max(...dataPoints, 0.01);
   const range = max - min || 1;
-
-  // Normaliser entre 0 et CHART_HEIGHT
-  const normalize = (v: number) =>
-    CHART_HEIGHT - ((v - min) / range) * CHART_HEIGHT;
-
-  const stepX = CHART_WIDTH / (dataPoints.length - 1);
-  const points = dataPoints.map((v, i) => ({
-    x: i * stepX,
-    y: normalize(v),
-  }));
-
-  // Construire le chemin SVG de la courbe
-  const pathD = points
-    .map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`))
-    .join(' ');
-
-  // Zone de remplissage (area)
-  const areaD =
-    pathD +
-    ` L${points[points.length - 1].x},${CHART_HEIGHT} L0,${CHART_HEIGHT} Z`;
-
-  const isPositive = dataPoints[dataPoints.length - 1] >= 0;
-  const lineColor = isPositive ? '#34d399' : '#f87171';
-  const areaColor = isPositive ? '#34d39920' : '#f8717120';
-
-  // Ligne zéro
+  const normalize = (value: number) => CHART_HEIGHT - ((value - min) / range) * CHART_HEIGHT;
+  const points = dataPoints.map((value, index) => ({ x: (index * chartWidth) / (dataPoints.length - 1), y: normalize(value) }));
   const zeroY = normalize(0);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Évolution du capital</Text>
-      <View style={styles.chartWrap}>
-        {/* SVG rendu via View + positionnement absolu des "points" */}
-        {/* On dessine la courbe avec des lignes entre chaque point */}
-        <View style={[styles.svgArea, { height: CHART_HEIGHT }]}>
-          {/* Ligne zéro */}
-          <View
-            style={[
-              styles.zeroLine,
-              { top: zeroY },
-            ]}
-          />
-          {/* Segments de courbe */}
-          {points.slice(1).map((p, i) => {
-            const prev = points[i];
-            const dx = p.x - prev.x;
-            const dy = p.y - prev.y;
-            const length = Math.sqrt(dx * dx + dy * dy);
-            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-            return (
-              <View
-                key={i}
-                style={[
-                  styles.segment,
-                  {
-                    width: length,
-                    left: prev.x,
-                    top: prev.y,
-                    transform: [{ rotate: `${angle}deg` }],
-                    backgroundColor: lineColor,
-                  },
-                ]}
-              />
-            );
-          })}
-          {/* Points */}
-          {points.map((p, i) => (
-            <View
-              key={`dot-${i}`}
-              style={[
-                styles.dot,
-                {
-                  left: p.x - 3,
-                  top: p.y - 3,
-                  backgroundColor:
-                    i === points.length - 1 ? lineColor : lineColor + '80',
-                  width: i === points.length - 1 ? 8 : 5,
-                  height: i === points.length - 1 ? 8 : 5,
-                  borderRadius: i === points.length - 1 ? 4 : 2.5,
-                },
-              ]}
-            />
-          ))}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.eyebrow}>Trésorerie</Text>
+          <Text style={styles.title}>Évolution du capital</Text>
         </View>
-
-        {/* Légende valeurs min/max */}
-        <View style={styles.legend}>
-          <Text style={[styles.legendVal, { color: isPositive ? '#34d399' : '#f87171' }]}>
-            {dataPoints[dataPoints.length - 1] >= 0 ? '+' : ''}
-            {dataPoints[dataPoints.length - 1].toFixed(1)}$
-          </Text>
-          <Text style={styles.legendCount}>{dataPoints.length} ops</Text>
+        <View style={[styles.trendBadge, trendUp ? styles.trendPositive : styles.trendNegative]}>
+          <Ionicons name={trendUp ? 'trending-up' : 'trending-down'} size={13} color={lineColor} />
+          <Text style={[styles.trendText, { color: lineColor }]}>{formatUSD(Math.abs(change))}</Text>
         </View>
       </View>
+
+      <View style={[styles.chartArea, { width: chartWidth }]}>
+        {[0.25, 0.5, 0.75].map((position) => (
+          <View key={position} style={[styles.gridLine, { top: CHART_HEIGHT * position }]} />
+        ))}
+        <View style={[styles.zeroLine, { top: zeroY }]} />
+        {points.slice(1).map((point, index) => {
+          const previous = points[index];
+          const dx = point.x - previous.x;
+          const dy = point.y - previous.y;
+          const length = Math.sqrt(dx * dx + dy * dy);
+          const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+          return (
+            <View
+              key={`segment-${index}`}
+              style={[styles.segment, { width: length, left: previous.x, top: previous.y, transform: [{ rotate: `${angle}deg` }], backgroundColor: lineColor }]}
+            />
+          );
+        })}
+        {points.map((point, index) => {
+          const isLast = index === points.length - 1;
+          const size = isLast ? 10 : 6;
+          return (
+            <View
+              key={`point-${index}`}
+              style={[styles.point, { left: point.x - size / 2, top: point.y - size / 2, width: size, height: size, borderRadius: size / 2, backgroundColor: isLast ? lineColor : `${lineColor}99` }]}
+            />
+          );
+        })}
+      </View>
+
+      <View style={styles.axisRow}>
+        <Text style={styles.axisLabel}>{formatUSD(max)}</Text>
+        <Text style={styles.currentValue}>{formatUSD(currentValue)}</Text>
+        <Text style={styles.axisLabel}>{formatUSD(min)}</Text>
+      </View>
+      <Text style={styles.caption}>{dataPoints.length} dernières opérations · solde cumulé</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#0a111e',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#1e3a5f',
-    gap: 10,
-  },
-  label: {
-    color: '#4b5563',
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  chartWrap: { gap: 6 },
-  svgArea: {
-    width: '100%',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  zeroLine: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: '#1f2937',
-  },
-  segment: {
-    position: 'absolute',
-    height: 2,
-    borderRadius: 1,
-    transformOrigin: 'left center',
-  },
-  dot: {
-    position: 'absolute',
-  },
-  legend: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  legendVal: { fontSize: 13, fontWeight: '800' },
-  legendCount: { color: '#374151', fontSize: 11 },
+  container: { backgroundColor: '#0a111e', borderRadius: 18, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: '#1e3a5f', gap: 12 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  eyebrow: { color: '#60a5fa', fontSize: 10, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' },
+  title: { color: '#f9fafb', fontSize: 16, fontWeight: '800', marginTop: 3 },
+  trendBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 6, borderRadius: 9 },
+  trendPositive: { backgroundColor: '#052e2b' },
+  trendNegative: { backgroundColor: '#350d12' },
+  trendText: { fontSize: 11, fontWeight: '800' },
+  chartArea: { height: CHART_HEIGHT, position: 'relative', overflow: 'hidden' },
+  gridLine: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: '#162235' },
+  zeroLine: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: '#334155' },
+  segment: { position: 'absolute', height: 2.5, borderRadius: 2, transformOrigin: 'left center' },
+  point: { position: 'absolute' },
+  axisRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  axisLabel: { color: '#64748b', fontSize: 10 },
+  currentValue: { color: '#e5e7eb', fontSize: 12, fontWeight: '800' },
+  caption: { color: '#475569', fontSize: 10 },
 });

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { USD_TO_GNF } from '@/constants/currency';
 
 interface ExchangeState {
@@ -10,6 +11,11 @@ interface ExchangeState {
 
 const CACHE_KEY = 'exchange_rate_cache';
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6h
+
+interface CachedRate {
+  rate: number;
+  fetchedAt: number;
+}
 
 /**
  * Hook qui récupère le taux USD→GNF en temps réel.
@@ -28,13 +34,38 @@ export function useExchangeRate(): ExchangeState {
     let cancelled = false;
 
     async function fetchRate() {
+      let cached: CachedRate | null = null;
       try {
+        const rawCache = await AsyncStorage.getItem(CACHE_KEY);
+        if (rawCache) {
+          const parsedCache = JSON.parse(rawCache) as CachedRate;
+          if (parsedCache.rate > 0 && Date.now() - parsedCache.fetchedAt < CACHE_TTL_MS) {
+            cached = parsedCache;
+            if (!cancelled) {
+              setState({
+                rate: parsedCache.rate,
+                loading: false,
+                lastUpdated: new Date(parsedCache.fetchedAt).toLocaleTimeString('fr-FR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+                error: false,
+              });
+            }
+          }
+        }
+
         // API gratuite, sans clé, 1500 req/mois
         const res = await fetch('https://open.er-api.com/v6/latest/USD');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         const gnfRate: number = data?.rates?.GNF;
         if (!gnfRate || typeof gnfRate !== 'number') throw new Error('No GNF rate');
+
+        await AsyncStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({ rate: gnfRate, fetchedAt: Date.now() } satisfies CachedRate)
+        );
 
         if (!cancelled) {
           setState({
@@ -51,7 +82,7 @@ export function useExchangeRate(): ExchangeState {
         if (!cancelled) {
           setState((prev) => ({
             ...prev,
-            rate: USD_TO_GNF,
+            rate: cached?.rate ?? USD_TO_GNF,
             loading: false,
             error: true,
           }));
@@ -60,7 +91,11 @@ export function useExchangeRate(): ExchangeState {
     }
 
     fetchRate();
-    return () => { cancelled = true; };
+    const refreshTimer = setInterval(fetchRate, CACHE_TTL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(refreshTimer);
+    };
   }, []);
 
   return state;

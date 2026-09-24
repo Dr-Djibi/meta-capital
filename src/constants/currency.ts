@@ -1,5 +1,4 @@
-// Taux de change USD → GNF (Franc Guinéen)
-// Taux approximatif : 1 USD ≈ 8 600 GNF
+// Secours hors-ligne uniquement. Le taux en ligne vient de useExchangeRate().
 export const USD_TO_GNF = 8600;
 
 export type Currency = 'USD' | 'GNF';
@@ -32,15 +31,15 @@ export const PAYMENT_METHOD_COLORS: Record<PaymentMethod, string> = {
 };
 
 /** Convertit un montant dans une devise en USD */
-export function toUSD(amount: number, currency: Currency): number {
+export function toUSD(amount: number, currency: Currency, usdToGnf = USD_TO_GNF): number {
   if (currency === 'USD') return amount;
-  return amount / USD_TO_GNF;
+  return amount / usdToGnf;
 }
 
 /** Convertit un montant dans une devise en GNF */
-export function toGNF(amount: number, currency: Currency): number {
+export function toGNF(amount: number, currency: Currency, usdToGnf = USD_TO_GNF): number {
   if (currency === 'GNF') return amount;
-  return amount * USD_TO_GNF;
+  return amount * usdToGnf;
 }
 
 /** Formate un montant en USD */
@@ -56,9 +55,9 @@ export function formatGNF(amount: number): string {
 }
 
 /** Retourne les 2 devises formatées depuis un montant USD */
-export function formatDual(amountUSD: number): { usd: string; gnf: string } {
+export function formatDual(amountUSD: number, usdToGnf = USD_TO_GNF): { usd: string; gnf: string } {
   return {
     usd: formatUSD(amountUSD),
-    gnf: formatGNF(amountUSD * USD_TO_GNF),
+    gnf: formatGNF(amountUSD * usdToGnf),
   };
 }
