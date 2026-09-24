@@ -35,7 +35,6 @@ import {
 } from '@/constants/currency';
 
 const INCOME_CATEGORIES: TransactionCategory[] = [
-  'INITIAL_BALANCE',
   'PERSONAL_FUNDS',
   'FAMILY_SUPPORT',
   'SALES_REVENUE',
@@ -57,9 +56,10 @@ interface TransactionFormProps {
   liveRate?: number;
   onComplete?: () => void;
   initialTransaction?: Transaction;
+  allowInitialBalance?: boolean;
 }
 
-export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTransaction }: TransactionFormProps) {
+export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTransaction, allowInitialBalance = false }: TransactionFormProps) {
   const addTransaction = useCapitalStore((s) => s.addTransaction);
   const updateTransaction = useCapitalStore((s) => s.updateTransaction);
   const [type, setType] = useState<'INCOME' | 'EXPENSE'>(initialTransaction?.type ?? 'INCOME');
@@ -69,7 +69,9 @@ export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTran
   const [category, setCategory] = useState<TransactionCategory>(initialTransaction?.category ?? 'PERSONAL_FUNDS');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(initialTransaction?.paymentMethod ?? 'ORANGE_MONEY');
 
-  const categories = type === 'INCOME' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const categories = type === 'INCOME' && allowInitialBalance
+    ? ['INITIAL_BALANCE', ...INCOME_CATEGORIES] as TransactionCategory[]
+    : type === 'INCOME' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
   const handleTypeSwitch = (t: 'INCOME' | 'EXPENSE') => {
     setType(t);

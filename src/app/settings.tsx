@@ -1,11 +1,27 @@
-import React from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useExchangeRate } from '@/hooks/use-exchange-rate';
+import { TransactionForm } from '@/components/TransactionForm';
+import { useCapitalStore } from '@/store/useCapitalStore';
 
 export default function SettingsScreen() {
   const { rate, loading, lastUpdated, error, refresh } = useExchangeRate();
+  const transactions = useCapitalStore((state) => state.transactions);
+  const clearTransactions = useCapitalStore((state) => state.clearTransactions);
+  const [showInitialBalance, setShowInitialBalance] = useState(false);
+
+  const handleClearHistory = () => {
+    if (transactions.length === 0) {
+      Alert.alert('Historique vide', 'Il n’y a aucune transaction à supprimer.');
+      return;
+    }
+    Alert.alert('Effacer tout l’historique ?', 'Toutes les transactions seront supprimées et le capital reviendra à zéro.', [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Effacer', style: 'destructive', onPress: clearTransactions },
+    ]);
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -30,7 +46,31 @@ export default function SettingsScreen() {
         <View style={styles.ruleCard}><Ionicons name="cube-outline" size={19} color="#f59e0b" /><View><Text style={styles.ruleTitle}>Produits</Text><Text style={styles.ruleText}>Produit et publicité en USD · transitaire en GNF</Text></View></View>
         <View style={styles.ruleCard}><Ionicons name="cart-outline" size={19} color="#34d399" /><View><Text style={styles.ruleTitle}>Ventes</Text><Text style={styles.ruleText}>Prix réel et livreur en GNF</Text></View></View>
         <View style={styles.ruleCard}><Ionicons name="calculator-outline" size={19} color="#60a5fa" /><View><Text style={styles.ruleTitle}>Capital</Text><Text style={styles.ruleText}>Net de la vente converti en USD</Text></View></View>
+
+        <Text style={styles.sectionHeading}>Actions</Text>
+        <TouchableOpacity style={styles.actionCard} onPress={() => setShowInitialBalance(true)}>
+          <Ionicons name="flag-outline" size={19} color="#f59e0b" />
+          <View style={styles.actionInfo}><Text style={styles.ruleTitle}>Ajouter un capital de départ</Text><Text style={styles.ruleText}>Disponible uniquement ici</Text></View>
+          <Ionicons name="chevron-forward" size={17} color="#64748b" />
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.actionCard, styles.dangerCard]} onPress={handleClearHistory}>
+          <Ionicons name="trash-outline" size={19} color="#f87171" />
+          <View style={styles.actionInfo}><Text style={[styles.ruleTitle, styles.dangerText]}>Effacer l’historique</Text><Text style={styles.ruleText}>Réinitialise aussi le capital calculé</Text></View>
+          <Ionicons name="chevron-forward" size={17} color="#64748b" />
+        </TouchableOpacity>
       </ScrollView>
+
+      <Modal visible={showInitialBalance} animationType="slide" transparent onRequestClose={() => setShowInitialBalance(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Capital de départ</Text>
+              <TouchableOpacity onPress={() => setShowInitialBalance(false)}><Ionicons name="close" size={24} color="#9ca3af" /></TouchableOpacity>
+            </View>
+            <TransactionForm allowInitialBalance liveRate={rate} onComplete={() => setShowInitialBalance(false)} />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -53,4 +93,12 @@ const styles = StyleSheet.create({
   ruleCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#0f172a', borderRadius: 14, borderWidth: 1, borderColor: '#1f2937', padding: 14 },
   ruleTitle: { color: '#e5e7eb', fontSize: 13, fontWeight: '800', marginBottom: 3 },
   ruleText: { color: '#cbd5e1', fontSize: 13 },
+  actionCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#0f172a', borderRadius: 14, borderWidth: 1, borderColor: '#1f2937', padding: 14 },
+  dangerCard: { borderColor: '#3f1d25' },
+  actionInfo: { flex: 1 },
+  dangerText: { color: '#fca5a5' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.72)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#0f172a', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 30, maxHeight: '90%' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  modalTitle: { color: '#f9fafb', fontSize: 19, fontWeight: '800' },
 });

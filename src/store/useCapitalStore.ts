@@ -58,6 +58,7 @@ interface CapitalState {
   addTransaction: (t: Omit<Transaction, 'id' | 'date'>) => void;
   updateTransaction: (id: string, updates: Omit<Transaction, 'id' | 'date'>) => void;
   deleteTransaction: (id: string) => void;
+  clearTransactions: () => void;
   /** Capital net en USD */
   getNetCapital: () => number;
 }
@@ -89,6 +90,8 @@ export const useCapitalStore = create<CapitalState>()(
         set((s) => ({
           transactions: s.transactions.filter((t) => t.id !== id),
         })),
+
+      clearTransactions: () => set({ transactions: [] }),
 
       getNetCapital: () => {
         const { transactions } = get();
