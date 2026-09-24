@@ -56,6 +56,24 @@ jobs:
       - name: Génération du projet Android
         run: npx expo prebuild --platform android --clean --non-interactive
 
+      - name: Installation du NDK Android requis
+        shell: bash
+        run: |
+          set -euo pipefail
+          NDK_VERSION="27.1.12297006"
+          SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          rm -rf "${ANDROID_HOME}/ndk/${NDK_VERSION}" "${HOME}/.android/cache"
+          for attempt in 1 2 3; do
+            if printf 'y\n' | "${SDKMANAGER}" "ndk;${NDK_VERSION}"; then
+              test -f "${ANDROID_HOME}/ndk/${NDK_VERSION}/source.properties"
+              exit 0
+            fi
+            rm -rf "${ANDROID_HOME}/ndk/${NDK_VERSION}" "${HOME}/.android/cache"
+            echo "Nouvelle tentative NDK: ${attempt}/3"
+          done
+          echo "Impossible d'installer le NDK ${NDK_VERSION}"
+          exit 1
+
       - name: Compilation de l'APK release
         working-directory: android
         run: ./gradlew assembleRelease
