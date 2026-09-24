@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   rateTime: { color: '#4b5563', fontWeight: '400' },
   fab: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 90,
     right: 24,
     width: 56,
     height: 56,

@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { useColorScheme, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { GlassView } from 'expo-glass-effect';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 
@@ -21,12 +21,12 @@ export default function AppTabs() {
           paddingBottom: 8,
         },
         tabBarBackground: () => (
-          <BlurView
-            tint="dark"
-            intensity={80}
+          <GlassView
+            colorScheme="dark"
+            glassEffectStyle="regular"
             style={{
               flex: 1,
-              backgroundColor: 'rgba(15, 23, 42, 0.5)', // "Liquid glass" dark tint
+              backgroundColor: 'rgba(15, 23, 42, 0.3)', // Fallback / supplementary tint
             }}
           />
         ),
