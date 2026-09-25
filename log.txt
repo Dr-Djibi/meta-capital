@@ -1,0 +1,101 @@
+cd downloader-app
+❯ git add package.json
+❯ git pull --rebase origin main
+npm install
+Depuis github.com:Dr-Djibi/OmniDl
+ * branch            main       -> FETCH_HEAD
+Déjà à jour.
+
+up to date, audited 521 packages in 42s
+
+45 packages are looking for funding
+  run `npm fund` for details
+
+11 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+❯ cd
+❯ cd meta-capital
+❯ git pull --rebase origin main
+npm install
+ssh: Could not resolve hostname github.com: Temporary failure in name resolution
+fatal : Impossible de lire le dépôt distant.
+
+Veuillez vérifier que vous avez les droits d'accès
+et que le dépôt existe.
+
+up to date, audited 852 packages in 4m
+
+166 packages are looking for funding
+  run `npm fund` for details
+
+16 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+npm warn install-scripts 1 package had install scripts blocked because they are not covered by allowScripts:
+npm warn install-scripts   unrs-resolver@1.12.2 (postinstall: node postinstall.js)
+npm warn install-scripts
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+❯ npx expo-doctor
+npm notice run app@1.0.0 npx
+npm notice run 'expo-doctor'
+21/21 checks passed. No issues detected!
+❯ npx expo lint
+npm notice run app@1.0.0 npx
+npm notice run 'expo' lint
+npm notice run app@1.0.0 npx
+npm notice run 'eslint' /home/menma/meta-capital/src --fix=false --cache=true --cache-location=/home/menma/meta-capital/.expo/cache/eslint/
+
+/home/menma/meta-capital/src/components/BudgetBanner.tsx
+  8:3  warning  'ScrollView' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/menma/meta-capital/src/components/CapitalChart.tsx
+  18:7  error  Error: Cannot reassign variable after render completes
+
+Reassigning `running` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead.
+
+/home/menma/meta-capital/src/components/CapitalChart.tsx:18:7
+  16 |     let running = 0;
+  17 |     const history = sorted.map((transaction) => {
+> 18 |       running += transaction.type === 'INCOME' ? transaction.amount : -transaction.amount;
+     |       ^^^^^^^ Cannot reassign `running` after render completes
+  19 |       return running;
+  20 |     });
+  21 |     return history.slice(-POINTS);  react-hooks/immutability
+
+/home/menma/meta-capital/src/components/TransactionList.tsx
+   41:9  warning  'rowHeight' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  261:9  warning  'confirmDelete' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/menma/meta-capital/src/components/app-tabs.tsx
+  9:9  warning  'colors' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/menma/meta-capital/src/hooks/use-color-scheme.web.ts
+  11:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/menma/meta-capital/src/hooks/use-color-scheme.web.ts:11:5
+   9 |
+  10 |   useEffect(() => {
+> 11 |     setHasHydrated(true);
+     |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  12 |   }, []);
+  13 |
+  14 |   const colorScheme = useRNColorScheme();  react-hooks/set-state-in-effect
+
+/home/menma/meta-capital/src/store/useCapitalStore.ts
+  4:35  warning  'toUSD' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 7 problems (2 errors, 5 warnings)
+
