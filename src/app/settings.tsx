@@ -1,16 +1,26 @@
-import React, { useState } from 'react';
+import { TransactionForm } from '@/components/TransactionForm';
+import { useBiometricLock } from '@/hooks/use-biometric-lock';
+import { useExchangeRate } from '@/hooks/use-exchange-rate';
+import { useCapitalStore } from '@/store/useCapitalStore';
+import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useExchangeRate } from '@/hooks/use-exchange-rate';
-import { TransactionForm } from '@/components/TransactionForm';
-import { useCapitalStore } from '@/store/useCapitalStore';
 
 export default function SettingsScreen() {
   const { rate, loading, lastUpdated, error, refresh } = useExchangeRate();
   const transactions = useCapitalStore((state) => state.transactions);
   const clearTransactions = useCapitalStore((state) => state.clearTransactions);
   const [showInitialBalance, setShowInitialBalance] = useState(false);
+  const { available: biometricAvailable, enabled: biometricEnabled, enable: enableBiometric, disable: disableBiometric } = useBiometricLock();
+
+  const handleBiometricToggle = async () => {
+    if (biometricEnabled) {
+      await disableBiometric();
+      return;
+    }
+    await enableBiometric();
+  };
 
   const handleClearHistory = () => {
     if (transactions.length === 0) {
@@ -48,6 +58,11 @@ export default function SettingsScreen() {
         <View style={styles.ruleCard}><Ionicons name="calculator-outline" size={19} color="#60a5fa" /><View><Text style={styles.ruleTitle}>Capital</Text><Text style={styles.ruleText}>Net de la vente converti en USD</Text></View></View>
 
         <Text style={styles.sectionHeading}>Actions</Text>
+        <TouchableOpacity style={styles.actionCard} onPress={handleBiometricToggle} disabled={!biometricAvailable}>
+          <Ionicons name="finger-print-outline" size={19} color={biometricAvailable ? '#34d399' : '#64748b'} />
+          <View style={styles.actionInfo}><Text style={styles.ruleTitle}>Verrouillage biométrique</Text><Text style={styles.ruleText}>{biometricAvailable ? (biometricEnabled ? 'Activé · toucher pour désactiver' : 'Protéger l’accès à l’application') : 'Biométrie indisponible sur cet appareil'}</Text></View>
+          <Ionicons name={biometricEnabled ? 'toggle' : 'toggle-outline'} size={25} color={biometricAvailable ? '#34d399' : '#64748b'} />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.actionCard} onPress={() => setShowInitialBalance(true)}>
           <Ionicons name="flag-outline" size={19} color="#f59e0b" />
           <View style={styles.actionInfo}><Text style={styles.ruleTitle}>Ajouter un capital de départ</Text><Text style={styles.ruleText}>Disponible uniquement ici</Text></View>
