@@ -13,7 +13,8 @@ const numberValue = (value: string) => parseFloat(value.replace(',', '.')) || 0;
 export default function SalesScreen() {
   const products = useProductStore((state) => state.products);
   const decrementQuantity = useProductStore((state) => state.decrementQuantity);
-  const { transactions, addTransaction } = useCapitalStore((state) => ({ transactions: state.transactions, addTransaction: state.addTransaction }));
+  const transactions = useCapitalStore((state) => state.transactions);
+  const addTransaction = useCapitalStore((state) => state.addTransaction);
   const { rate } = useExchangeRate();
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [salePrice, setSalePrice] = useState('');
