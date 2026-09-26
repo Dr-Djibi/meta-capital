@@ -1,4 +1,4 @@
-import { TransactionForm } from '@/components/TransactionForm';
+import { InitialBalanceForm } from '@/components/InitialBalanceForm';
 import { useBiometricLock } from '@/hooks/use-biometric-lock';
 import { useExchangeRate } from '@/hooks/use-exchange-rate';
 import { useCapitalStore } from '@/store/useCapitalStore';
@@ -52,11 +52,6 @@ export default function SettingsScreen() {
           <Text style={styles.help}>Le taux est récupéré automatiquement en ligne et conservé localement pour continuer à convertir sans réseau.</Text>
         </View>
 
-        <Text style={styles.sectionHeading}>Comment les montants sont utilisés</Text>
-        <View style={styles.ruleCard}><Ionicons name="cube-outline" size={19} color="#f59e0b" /><View><Text style={styles.ruleTitle}>Produits</Text><Text style={styles.ruleText}>Produit et publicité en USD · transitaire en GNF</Text></View></View>
-        <View style={styles.ruleCard}><Ionicons name="cart-outline" size={19} color="#34d399" /><View><Text style={styles.ruleTitle}>Ventes</Text><Text style={styles.ruleText}>Prix réel et livreur en GNF</Text></View></View>
-        <View style={styles.ruleCard}><Ionicons name="calculator-outline" size={19} color="#60a5fa" /><View><Text style={styles.ruleTitle}>Capital</Text><Text style={styles.ruleText}>Net de la vente converti en USD</Text></View></View>
-
         <Text style={styles.sectionHeading}>Actions</Text>
         <TouchableOpacity style={styles.actionCard} onPress={handleBiometricToggle} disabled={!biometricAvailable}>
           <Ionicons name="finger-print-outline" size={19} color={biometricAvailable ? '#34d399' : '#64748b'} />
@@ -82,7 +77,7 @@ export default function SettingsScreen() {
               <Text style={styles.modalTitle}>Capital de départ</Text>
               <TouchableOpacity onPress={() => setShowInitialBalance(false)}><Ionicons name="close" size={24} color="#9ca3af" /></TouchableOpacity>
             </View>
-            <TransactionForm allowInitialBalance liveRate={rate} onComplete={() => setShowInitialBalance(false)} />
+            <InitialBalanceForm liveRate={rate} onComplete={() => setShowInitialBalance(false)} />
           </View>
         </View>
       </Modal>

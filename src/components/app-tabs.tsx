@@ -1,24 +1,32 @@
 import { Tabs } from 'expo-router';
-import { useColorScheme, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { GlassView } from 'expo-glass-effect';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/theme';
 
 export default function AppTabs() {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
-
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
-          backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(15, 23, 42, 0.8)',
+          backgroundColor: Platform.OS === 'android' ? 'rgba(3, 7, 18, 0.9)' : 'transparent',
           borderTopWidth: 0,
           elevation: 0,
-          height: 60,
-          paddingBottom: 8,
+          height: 64,
+          bottom: 24,
+          left: 20,
+          right: 20,
+          borderRadius: 32,
+          paddingBottom: 0,
+          overflow: 'hidden',
+          borderColor: 'rgba(255, 255, 255, 0.08)',
+          borderWidth: 1,
+        },
+        tabBarItemStyle: {
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingVertical: 10,
         },
         tabBarBackground: () => (
           <GlassView
@@ -26,19 +34,20 @@ export default function AppTabs() {
             glassEffectStyle="regular"
             style={{
               flex: 1,
-              backgroundColor: 'rgba(15, 23, 42, 0.3)', // Fallback / supplementary tint
+              backgroundColor: 'rgba(3, 7, 18, 0.4)',
             }}
           />
         ),
-        tabBarActiveTintColor: '#3b82f6',
-        tabBarInactiveTintColor: '#6b7280',
+        tabBarActiveTintColor: '#60a5fa',
+        tabBarInactiveTintColor: '#475569',
+        tabBarShowLabel: false,
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Capital',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="pie-chart" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "pie-chart" : "pie-chart-outline"} size={26} color={color} />
           ),
         }}
       />
@@ -46,8 +55,8 @@ export default function AppTabs() {
         name="explore"
         options={{
           title: 'Produits',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cube" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "cube" : "cube-outline"} size={26} color={color} />
           ),
         }}
       />
@@ -55,8 +64,8 @@ export default function AppTabs() {
         name="sales"
         options={{
           title: 'Ventes',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cart" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "cart" : "cart-outline"} size={26} color={color} />
           ),
         }}
       />
@@ -64,8 +73,8 @@ export default function AppTabs() {
         name="settings"
         options={{
           title: 'Paramètres',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "settings" : "settings-outline"} size={26} color={color} />
           ),
         }}
       />

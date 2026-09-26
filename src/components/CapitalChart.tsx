@@ -13,11 +13,11 @@ export function CapitalChart() {
   const chartWidth = Math.max(220, windowWidth - 64);
   const dataPoints = useMemo(() => {
     const sorted = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    let running = 0;
-    const history = sorted.map((transaction) => {
-      running += transaction.type === 'INCOME' ? transaction.amount : -transaction.amount;
-      return running;
-    });
+    const history = sorted.reduce<number[]>((acc, transaction) => {
+      const prev = acc.length > 0 ? acc[acc.length - 1] : 0;
+      acc.push(prev + (transaction.type === 'INCOME' ? transaction.amount : -transaction.amount));
+      return acc;
+    }, []);
     return history.slice(-POINTS);
   }, [transactions]);
 

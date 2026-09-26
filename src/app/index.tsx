@@ -68,91 +68,49 @@ export default function DashboardScreen() {
 
         {/* Header */}
         <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.subtitle}>Tableau de bord</Text>
-            <Text style={styles.title}>Meta Capital</Text>
-          </View>
+          <Text style={styles.title}>Meta Capital</Text>
           <View style={styles.headerIcons}>
             <TouchableOpacity
               style={[styles.headerIcon, showBudgetSettings && styles.headerIconActive]}
               onPress={() => setShowBudgetSettings((v) => !v)}
             >
-              <Ionicons name="wallet-outline" size={20} color={showBudgetSettings ? '#f59e0b' : '#60a5fa'} />
+              <Ionicons name="wallet-outline" size={20} color={showBudgetSettings ? '#fff' : '#888'} />
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.headerIcon, transactions.length === 0 && { opacity: 0.4 }]}
               onPress={handleExport}
               disabled={transactions.length === 0}
             >
-              <Ionicons name="share-outline" size={20} color="#60a5fa" />
+              <Ionicons name="share-outline" size={20} color="#888" />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Capital Card */}
-        <View style={[styles.capitalCard, isPositive ? styles.capitalCardPositive : styles.capitalCardNegative]}>
-          <View style={styles.capitalCardGlow} />
-
-          <Text style={styles.capitalLabel}>Capital disponible</Text>
-
-          <Text style={[styles.capitalAmountUSD, isPositive ? styles.positive : styles.negative]}>
-            {isPositive ? '+' : ''}{formatUSD(netCapitalUSD)}
-          </Text>
-
+        {/* Big Balance */}
+        <View style={styles.capitalCard}>
+          <Text style={styles.capitalLabel}>Capital Actuel</Text>
+          <Text style={styles.capitalAmountUSD}>{formatUSD(netCapitalUSD)}</Text>
           <View style={styles.gnfRow}>
-            <Ionicons name="swap-horizontal-outline" size={13} color="#f59e0b" />
-            <Text style={styles.capitalAmountGNF}>
-              {isPositive ? '+' : ''}{formatGNF(netCapitalGNF)}
-            </Text>
+            <Ionicons name="swap-horizontal-outline" size={14} color="#666" />
+            <Text style={styles.capitalAmountGNF}>{formatGNF(netCapitalGNF)}</Text>
           </View>
-
         </View>
 
+        {/* Clean Stat Cards */}
         <View style={styles.statCardsRow}>
           <View style={styles.statCard}>
             <View style={styles.statHeader}>
-              <View style={styles.statIconWrap}><Ionicons name="arrow-down-circle-outline" size={14} color="#34d399" /></View>
-              <Text style={styles.statLabel}>Dépôts</Text>
+              <View style={styles.statIconWrap}><Ionicons name="arrow-down-outline" size={14} color="#34d399" /></View>
+              <Text style={styles.statLabel}>Entrées (Mois)</Text>
             </View>
-            <Text style={[styles.statValueUSD, styles.positive]}>+{formatUSD(totalIncomeUSD)}</Text>
-            <Text style={styles.statValueGNF}>+{formatGNF(totalIncomeUSD * liveRate)}</Text>
+            <Text style={styles.statValueUSD}>+{formatUSD(monthIncomeUSD)}</Text>
           </View>
           <View style={styles.statCard}>
             <View style={styles.statHeader}>
-              <View style={[styles.statIconWrap, styles.statIconExpense]}><Ionicons name="arrow-up-circle-outline" size={14} color="#f87171" /></View>
-              <Text style={styles.statLabel}>Retraits</Text>
+              <View style={[styles.statIconWrap, styles.statIconExpense]}><Ionicons name="arrow-up-outline" size={14} color="#f87171" /></View>
+              <Text style={styles.statLabel}>Sorties (Mois)</Text>
             </View>
-            <Text style={[styles.statValueUSD, styles.negative]}>-{formatUSD(totalExpenseUSD)}</Text>
-            <Text style={styles.statValueGNF}>-{formatGNF(totalExpenseUSD * liveRate)}</Text>
-          </View>
-        </View>
-
-        {/* Résumé du mois */}
-        <View style={styles.monthCard}>
-          <View style={styles.monthHeader}>
-            <View>
-              <Text style={styles.monthTitle}>Ce mois-ci</Text>
-              <Text style={styles.monthLabel}>{monthLabel}</Text>
-            </View>
-            <Ionicons name="calendar-outline" size={18} color="#60a5fa" />
-          </View>
-          <View style={styles.monthStats}>
-            <View style={styles.monthStat}>
-              <Text style={styles.monthStatLabel}>Entrées</Text>
-              <Text style={[styles.monthStatValue, styles.positive]}>+{formatUSD(monthIncomeUSD)}</Text>
-            </View>
-            <View style={styles.monthStatDivider} />
-            <View style={styles.monthStat}>
-              <Text style={styles.monthStatLabel}>Sorties</Text>
-              <Text style={[styles.monthStatValue, styles.negative]}>-{formatUSD(monthExpenseUSD)}</Text>
-            </View>
-            <View style={styles.monthStatDivider} />
-            <View style={styles.monthStat}>
-              <Text style={styles.monthStatLabel}>Net</Text>
-              <Text style={[styles.monthStatValue, monthNetUSD >= 0 ? styles.positive : styles.negative]}>
-                {monthNetUSD >= 0 ? '+' : ''}{formatUSD(monthNetUSD)}
-              </Text>
-            </View>
+            <Text style={styles.statValueUSD}>-{formatUSD(monthExpenseUSD)}</Text>
           </View>
         </View>
 
@@ -169,12 +127,9 @@ export default function DashboardScreen() {
         <TransactionList liveRate={liveRate} onEdit={openEditTransaction} />
       </ScrollView>
 
-      {/* FAB pour ajouter une transaction */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={openNewTransaction}
-      >
-        <Ionicons name="add" size={30} color="#fff" />
+      {/* FAB */}
+      <TouchableOpacity style={styles.fab} onPress={openNewTransaction}>
+        <Ionicons name="add" size={28} color="#000" />
       </TouchableOpacity>
 
       {/* Modal Formulaire */}
@@ -209,161 +164,87 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#030712' },
+  safe: { flex: 1, backgroundColor: '#000' },
   scroll: { flex: 1 },
-  content: { padding: 16, paddingBottom: 100 },
+  content: { padding: 20, paddingBottom: 120 },
 
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: 20,
+    alignItems: 'center',
+    marginBottom: 32,
+    marginTop: 8,
   },
-  subtitle: { color: '#4b5563', fontSize: 12, fontWeight: '500', marginBottom: 2 },
-  title: { color: '#f9fafb', fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
-  headerIcons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+  title: { color: '#fff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
+  headerIcons: { flexDirection: 'row', gap: 12 },
   headerIcon: {
-    width: 44,
-    height: 44,
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    backgroundColor: '#111',
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#1e3a5f',
   },
-  headerIconActive: {
-    borderColor: '#f59e0b',
-    backgroundColor: '#1a1000',
-  },
+  headerIconActive: { backgroundColor: '#333' },
 
   capitalCard: {
-    borderRadius: 24,
-    padding: 24,
-    marginBottom: 10,
-    borderWidth: 1,
-    overflow: 'hidden',
-    position: 'relative',
+    alignItems: 'center',
+    marginBottom: 36,
   },
-  capitalCardPositive: { backgroundColor: '#0a1a2e', borderColor: '#1e3a5f' },
-  capitalCardNegative: { backgroundColor: '#1a0a0a', borderColor: '#5f1e1e' },
-  capitalCardGlow: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#1d4ed8',
-    opacity: 0.06,
-  },
-
   capitalLabel: {
-    color: '#4b5563',
-    fontSize: 11,
+    color: '#888',
+    fontSize: 13,
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 10,
+    letterSpacing: 1.2,
+    marginBottom: 8,
   },
-  capitalAmountUSD: { fontSize: 46, fontWeight: '800', letterSpacing: -1.5 },
-  gnfRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4, marginBottom: 2 },
-  capitalAmountGNF: { color: '#f59e0b', fontSize: 17, fontWeight: '600' },
-  positive: { color: '#34d399' },
-  negative: { color: '#f87171' },
+  capitalAmountUSD: { color: '#fff', fontSize: 54, fontWeight: '800', letterSpacing: -2 },
+  gnfRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
+  capitalAmountGNF: { color: '#666', fontSize: 16, fontWeight: '500' },
 
-  statCardsRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
-  statCard: { flex: 1, backgroundColor: '#0f172a', borderRadius: 14, padding: 13, borderWidth: 1, borderColor: '#1f2937', gap: 5 },
-  statHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+  statCardsRow: { flexDirection: 'row', gap: 12, marginBottom: 32 },
+  statCard: { flex: 1, backgroundColor: '#111', borderRadius: 20, padding: 16, gap: 4 },
+  statHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
   statIconWrap: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    backgroundColor: '#064e3b',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statIconExpense: { backgroundColor: '#450a0a' },
-  statLabel: { color: '#4b5563', fontSize: 12, fontWeight: '600' },
-  statValueUSD: { fontSize: 15, fontWeight: '800' },
-  statValueGNF: { fontSize: 11, color: '#6b7280', fontWeight: '500' },
+  statIconExpense: { backgroundColor: 'rgba(248, 113, 113, 0.15)' },
+  statLabel: { color: '#888', fontSize: 13, fontWeight: '500' },
+  statValueUSD: { color: '#fff', fontSize: 18, fontWeight: '700' },
 
-  rateCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#1a1400',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#2a2000',
-  },
-  rateCardError: { backgroundColor: '#1a0a0a', borderColor: '#2a0000' },
-  rateText: { color: '#6b7280', fontSize: 12, flex: 1 },
-  rateHighlight: { color: '#f59e0b', fontWeight: '700' },
-  rateTime: { color: '#4b5563', fontWeight: '400' },
-  monthCard: {
-    backgroundColor: '#0f172a',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#1f2937',
-  },
-  monthHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  monthTitle: { color: '#e5e7eb', fontSize: 14, fontWeight: '700', textTransform: 'capitalize' },
-  monthLabel: { color: '#6b7280', fontSize: 11, marginTop: 2, textTransform: 'capitalize' },
-  monthStats: { flexDirection: 'row', alignItems: 'center' },
-  monthStat: { flex: 1, gap: 4 },
-  monthStatLabel: { color: '#6b7280', fontSize: 11 },
-  monthStatValue: { fontSize: 13, fontWeight: '800' },
-  monthStatDivider: { width: 1, height: 28, backgroundColor: '#1f2937', marginHorizontal: 10 },
   fab: {
     position: 'absolute',
-    bottom: 90,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#3b82f6',
+    bottom: 100,
+    right: 20,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
     elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
-  },
+  
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
   modalContent: {
-    backgroundColor: '#0f172a',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
+    backgroundColor: '#111',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
     paddingBottom: 40,
     maxHeight: '90%',
   },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    color: '#f9fafb',
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  modalCloseBtn: {
-    padding: 4,
-  },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  modalTitle: { color: '#fff', fontSize: 20, fontWeight: '700' },
+  modalCloseBtn: { padding: 4, backgroundColor: '#222', borderRadius: 16 },
 });
