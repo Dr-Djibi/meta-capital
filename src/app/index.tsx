@@ -39,13 +39,6 @@ export default function DashboardScreen() {
   const netCapitalUSD = getNetCapital();
   const netCapitalGNF = netCapitalUSD * liveRate;
 
-  const totalIncomeUSD = transactions
-    .filter((t) => t.type === 'INCOME')
-    .reduce((a, t) => a + t.amount, 0);
-  const totalExpenseUSD = transactions
-    .filter((t) => t.type === 'EXPENSE')
-    .reduce((a, t) => a + t.amount, 0);
-
   const now = new Date();
   const monthTransactions = transactions.filter((transaction) => {
     const date = new Date(transaction.date);
@@ -57,10 +50,6 @@ export default function DashboardScreen() {
   const monthExpenseUSD = monthTransactions
     .filter((t) => t.type === 'EXPENSE')
     .reduce((a, t) => a + t.amount, 0);
-  const monthNetUSD = monthIncomeUSD - monthExpenseUSD;
-  const monthLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-
-  const isPositive = netCapitalUSD >= 0;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -129,7 +118,7 @@ export default function DashboardScreen() {
 
       {/* FAB */}
       <TouchableOpacity style={styles.fab} onPress={openNewTransaction}>
-        <Ionicons name="add" size={28} color="#000" />
+        <Ionicons name="add" size={28} color="#fff" />
       </TouchableOpacity>
 
       {/* Modal Formulaire */}
@@ -172,40 +161,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 28,
     marginTop: 8,
   },
-  title: { color: '#fff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
-  headerIcons: { flexDirection: 'row', gap: 12 },
+  title: { color: '#f9fafb', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
+  headerIcons: { flexDirection: 'row', gap: 10 },
   headerIcon: {
-    width: 40,
-    height: 40,
-    backgroundColor: '#111',
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    backgroundColor: '#0f172a',
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: '#1f2937',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerIconActive: { backgroundColor: '#333' },
+  headerIconActive: { backgroundColor: '#1e3a5f', borderColor: '#2563eb' },
 
   capitalCard: {
     alignItems: 'center',
-    marginBottom: 36,
+    marginBottom: 28,
+    backgroundColor: '#0f172a',
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#1f2937',
   },
   capitalLabel: {
-    color: '#888',
-    fontSize: 13,
-    fontWeight: '600',
+    color: '#9ca3af',
+    fontSize: 12,
+    fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
     marginBottom: 8,
   },
-  capitalAmountUSD: { color: '#fff', fontSize: 54, fontWeight: '800', letterSpacing: -2 },
-  gnfRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
-  capitalAmountGNF: { color: '#666', fontSize: 16, fontWeight: '500' },
+  capitalAmountUSD: { color: '#f9fafb', fontSize: 48, fontWeight: '800', letterSpacing: -1.5 },
+  gnfRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, backgroundColor: '#111827', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#1f2937' },
+  capitalAmountGNF: { color: '#f59e0b', fontSize: 15, fontWeight: '700' },
 
-  statCardsRow: { flexDirection: 'row', gap: 12, marginBottom: 32 },
-  statCard: { flex: 1, backgroundColor: '#111', borderRadius: 20, padding: 16, gap: 4 },
-  statHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  statCardsRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  statCard: { flex: 1, backgroundColor: '#0f172a', borderRadius: 18, padding: 16, gap: 6, borderWidth: 1, borderColor: '#1f2937' },
+  statHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   statIconWrap: {
     width: 28,
     height: 28,
@@ -215,36 +212,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   statIconExpense: { backgroundColor: 'rgba(248, 113, 113, 0.15)' },
-  statLabel: { color: '#888', fontSize: 13, fontWeight: '500' },
-  statValueUSD: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  statLabel: { color: '#9ca3af', fontSize: 12, fontWeight: '600' },
+  statValueUSD: { color: '#f9fafb', fontSize: 18, fontWeight: '800' },
 
   fab: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 90,
     right: 20,
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#fff',
+    backgroundColor: '#2563eb',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#fff',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
     shadowRadius: 10,
-    elevation: 5,
+    elevation: 6,
   },
   
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
   modalContent: {
-    backgroundColor: '#111',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    padding: 24,
-    paddingBottom: 40,
+    backgroundColor: '#0f172a',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 20,
+    paddingBottom: 36,
     maxHeight: '90%',
+    borderWidth: 1,
+    borderColor: '#1f2937',
   },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  modalTitle: { color: '#fff', fontSize: 20, fontWeight: '700' },
-  modalCloseBtn: { padding: 4, backgroundColor: '#222', borderRadius: 16 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  modalTitle: { color: '#f9fafb', fontSize: 20, fontWeight: '800' },
+  modalCloseBtn: { padding: 6, backgroundColor: '#111827', borderRadius: 16, borderWidth: 1, borderColor: '#1f2937' },
 });

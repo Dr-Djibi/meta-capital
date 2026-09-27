@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Currency, PaymentMethod, toUSD } from '@/constants/currency';
+import { Currency, PaymentMethod } from '@/constants/currency';
 
 export type TransactionCategory =
   | 'INITIAL_BALANCE'

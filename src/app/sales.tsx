@@ -143,7 +143,7 @@ export default function SalesScreen() {
             </View>
             <View style={styles.fieldSmall}>
               <Text style={styles.label}>Quantité</Text>
-              <View style={styles.inputWrap}><TextInput style={styles.input} value={quantity} onChangeText={setQuantity} keyboardType="number-pad" /><Text style={styles.unit}>x</Text></View>
+              <View style={styles.inputWrap}><TextInput style={styles.input} value={quantity} onChangeText={setQuantity} keyboardType="number-pad" placeholder="1" placeholderTextColor="#4b5563" /><Text style={styles.unit}>x</Text></View>
             </View>
           </View>
           <View style={styles.fieldWide}>
