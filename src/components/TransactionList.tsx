@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
     Extrapolation,
@@ -38,7 +38,6 @@ interface SwipeableRowProps {
 
 function SwipeableRow({ item, liveRate, onDelete, onEdit }: SwipeableRowProps) {
   const translateX = useSharedValue(0);
-  const rowHeight = useSharedValue<number | 'auto'>('auto');
 
   const isIncome = item.type === 'INCOME';
   const sign = isIncome ? '+' : '-';
@@ -256,13 +255,6 @@ export function TransactionList({ liveRate = 8600, onEdit }: TransactionListProp
     all: transactions.length,
     income: transactions.filter((t) => t.type === 'INCOME').length,
     expense: transactions.filter((t) => t.type === 'EXPENSE').length,
-  };
-
-  const confirmDelete = (id: string, description: string) => {
-    Alert.alert('Supprimer ?', description || 'Cette transaction sera supprimée.', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => deleteTransaction(id) },
-    ]);
   };
 
   if (transactions.length === 0) {

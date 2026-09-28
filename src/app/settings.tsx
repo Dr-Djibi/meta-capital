@@ -87,7 +87,7 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#030712' },
-  content: { padding: 16, paddingBottom: 100, gap: 14 },
+  content: { padding: 16, paddingBottom: 120, gap: 14 },
   subtitle: { color: '#4b5563', fontSize: 12, fontWeight: '600' },
   title: { color: '#f9fafb', fontSize: 27, fontWeight: '800', marginBottom: 6 },
   section: { backgroundColor: '#0f172a', borderRadius: 18, borderWidth: 1, borderColor: '#1f2937', padding: 16, gap: 13 },

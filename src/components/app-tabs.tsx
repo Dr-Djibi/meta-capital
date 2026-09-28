@@ -10,9 +10,9 @@ export default function AppTabs() {
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
-          backgroundColor: Platform.OS === 'android' ? 'rgba(3, 7, 18, 0.9)' : 'transparent',
+          backgroundColor: Platform.OS === 'android' ? 'rgba(3, 7, 18, 0.85)' : 'transparent',
           borderTopWidth: 0,
-          elevation: 0,
+          elevation: 10,
           height: 64,
           bottom: 24,
           left: 20,
@@ -20,7 +20,7 @@ export default function AppTabs() {
           borderRadius: 32,
           paddingBottom: 0,
           overflow: 'hidden',
-          borderColor: 'rgba(255, 255, 255, 0.08)',
+          borderColor: 'rgba(255, 255, 255, 0.12)',
           borderWidth: 1,
         },
         tabBarItemStyle: {
