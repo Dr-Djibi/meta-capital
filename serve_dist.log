@@ -1,0 +1,9 @@
+ INFO  Accepting connections at http://localhost:8082
+ HTTP  9/28/2026 9:59:45 AM ::1 GET /
+ HTTP  9/28/2026 9:59:45 AM ::1 Returned 200 in 24 ms
+ HTTP  9/28/2026 9:59:45 AM ::1 GET /_expo/static/css/animated-icon.module-61eef500b898c20afb79cdc2b3304762.css
+ HTTP  9/28/2026 9:59:45 AM ::1 GET /_expo/static/js/web/entry-7f5c5871625239edc3384761f27b74fb.js
+ HTTP  9/28/2026 9:59:45 AM ::1 Returned 200 in 3 ms
+ HTTP  9/28/2026 9:59:45 AM ::1 Returned 200 in 28 ms
+ HTTP  9/28/2026 9:59:46 AM ::1 GET /assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.b4eb097d35f44ed943676fd56f6bdc51.ttf
+ HTTP  9/28/2026 9:59:46 AM ::1 Returned 200 in 4 ms
