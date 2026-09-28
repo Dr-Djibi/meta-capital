@@ -489,7 +489,7 @@ export default function ProduitsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#030712' },
   scroll: { flex: 1 },
-  content: { padding: 16, paddingBottom: 100 },
+  content: { padding: 16, paddingBottom: 120 },
 
   headerRow: {
     flexDirection: 'row',

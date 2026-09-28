@@ -193,7 +193,7 @@ export default function SalesScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#030712' },
-  content: { padding: 16, paddingBottom: 100, gap: 12 },
+  content: { padding: 16, paddingBottom: 120, gap: 12 },
   subtitle: { color: '#4b5563', fontSize: 12, fontWeight: '600' },
   title: { color: '#f9fafb', fontSize: 27, fontWeight: '800', marginBottom: 4 },
   rateBar: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#1a1400', borderColor: '#2a2000', borderWidth: 1, borderRadius: 10, padding: 10 },
