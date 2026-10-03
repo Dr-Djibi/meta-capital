@@ -64,12 +64,18 @@ export default function DashboardScreen() {
             <TouchableOpacity
               style={styles.headerIcon}
               onPress={() => setShowSmsModal(true)}
+              accessibilityLabel="Importer via SMS"
+              accessibilityRole="button"
+              accessibilityHint="Ouvre la fenêtre d'importation de SMS Orange Money et PayCard"
             >
               <Ionicons name="chatbox-ellipses-outline" size={20} color="#60a5fa" />
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.headerIcon, showBudgetSettings && styles.headerIconActive]}
               onPress={() => setShowBudgetSettings((v) => !v)}
+              accessibilityLabel="Configuration des budgets"
+              accessibilityRole="button"
+              accessibilityHint="Affiche ou masque les paramètres des budgets mensuels"
             >
               <Ionicons name="wallet-outline" size={20} color={showBudgetSettings ? '#fff' : '#888'} />
             </TouchableOpacity>
@@ -77,6 +83,9 @@ export default function DashboardScreen() {
               style={[styles.headerIcon, transactions.length === 0 && { opacity: 0.4 }]}
               onPress={handleExport}
               disabled={transactions.length === 0}
+              accessibilityLabel="Exporter en CSV"
+              accessibilityRole="button"
+              accessibilityHint="Exporte la liste des transactions au format CSV"
             >
               <Ionicons name="share-outline" size={20} color="#888" />
             </TouchableOpacity>
@@ -137,7 +146,13 @@ export default function DashboardScreen() {
       </ScrollView>
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={openNewTransaction}>
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={openNewTransaction}
+        accessibilityLabel="Nouvelle opération"
+        accessibilityRole="button"
+        accessibilityHint="Ouvre le formulaire pour enregistrer un dépôt ou un retrait"
+      >
         <Ionicons name="add" size={28} color="#fff" />
       </TouchableOpacity>
 
@@ -152,7 +167,12 @@ export default function DashboardScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{editingTransaction ? 'Modifier l’opération' : 'Nouvelle opération'}</Text>
-              <TouchableOpacity onPress={() => setShowFormModal(false)} style={styles.modalCloseBtn}>
+              <TouchableOpacity
+                onPress={() => setShowFormModal(false)}
+                style={styles.modalCloseBtn}
+                accessibilityLabel="Fermer"
+                accessibilityRole="button"
+              >
                 <Ionicons name="close" size={24} color="#6b7280" />
               </TouchableOpacity>
             </View>
