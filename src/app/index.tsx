@@ -7,6 +7,7 @@ import { TransactionForm } from '@/components/TransactionForm';
 import { TransactionList } from '@/components/TransactionList';
 import { CapitalChart } from '@/components/CapitalChart';
 import { BudgetBanner, BudgetSettings } from '@/components/BudgetBanner';
+import { SmsImportModal } from '@/components/SmsImportModal';
 import { useExchangeRate } from '@/hooks/use-exchange-rate';
 import { formatUSD, formatGNF } from '@/constants/currency';
 import { exportTransactionsToCSV } from '@/utils/exportCsv';
@@ -17,6 +18,7 @@ export default function DashboardScreen() {
   const { rate: liveRate } = useExchangeRate();
   const [showBudgetSettings, setShowBudgetSettings] = useState(false);
   const [showFormModal, setShowFormModal] = useState(false);
+  const [showSmsModal, setShowSmsModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const openNewTransaction = () => {
@@ -60,6 +62,12 @@ export default function DashboardScreen() {
           <Text style={styles.title}>Meta Capital</Text>
           <View style={styles.headerIcons}>
             <TouchableOpacity
+              style={styles.headerIcon}
+              onPress={() => setShowSmsModal(true)}
+            >
+              <Ionicons name="chatbox-ellipses-outline" size={20} color="#60a5fa" />
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[styles.headerIcon, showBudgetSettings && styles.headerIconActive]}
               onPress={() => setShowBudgetSettings((v) => !v)}
             >
@@ -84,6 +92,18 @@ export default function DashboardScreen() {
             <Text style={styles.capitalAmountGNF}>{formatGNF(netCapitalGNF)}</Text>
           </View>
         </View>
+
+        {/* Quick SMS banner button */}
+        <TouchableOpacity style={styles.smsQuickCard} onPress={() => setShowSmsModal(true)}>
+          <View style={styles.smsIconCircle}>
+            <Ionicons name="chatbox-ellipses-outline" size={20} color="#60a5fa" />
+          </View>
+          <View style={styles.smsQuickTextContainer}>
+            <Text style={styles.smsQuickTitle}>Lecture SMS Orange Money & PayCard</Text>
+            <Text style={styles.smsQuickSub}>Collez vos SMS pour enregistrer automatiquement vos dépôts et retraits</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#60a5fa" />
+        </TouchableOpacity>
 
         {/* Clean Stat Cards */}
         <View style={styles.statCardsRow}>
@@ -148,6 +168,13 @@ export default function DashboardScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Modal SMS Import */}
+      <SmsImportModal
+        visible={showSmsModal}
+        onClose={() => setShowSmsModal(false)}
+        liveRate={liveRate}
+      />
     </SafeAreaView>
   );
 }
@@ -180,7 +207,7 @@ const styles = StyleSheet.create({
 
   capitalCard: {
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 18,
     backgroundColor: '#0f172a',
     borderRadius: 20,
     paddingVertical: 24,
@@ -199,6 +226,29 @@ const styles = StyleSheet.create({
   capitalAmountUSD: { color: '#f9fafb', fontSize: 48, fontWeight: '800', letterSpacing: -1.5 },
   gnfRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, backgroundColor: '#111827', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#1f2937' },
   capitalAmountGNF: { color: '#f59e0b', fontSize: 15, fontWeight: '700' },
+
+  smsQuickCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#0f172a',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#1e3a5f',
+  },
+  smsIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#172554',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  smsQuickTextContainer: { flex: 1, gap: 2 },
+  smsQuickTitle: { color: '#f9fafb', fontSize: 13, fontWeight: '700' },
+  smsQuickSub: { color: '#94a3b8', fontSize: 11, lineHeight: 15 },
 
   statCardsRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
   statCard: { flex: 1, backgroundColor: '#0f172a', borderRadius: 18, padding: 16, gap: 6, borderWidth: 1, borderColor: '#1f2937' },

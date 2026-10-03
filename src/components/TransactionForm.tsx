@@ -34,6 +34,7 @@ import Animated, {
     withSpring,
     withTiming,
 } from 'react-native-reanimated';
+import { SmsImportModal } from '@/components/SmsImportModal';
 
 const INCOME_CATEGORIES: TransactionCategory[] = [
   'PERSONAL_FUNDS',
@@ -71,6 +72,7 @@ export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTran
   type PaymentSelection = PaymentMethod | 'CUSTOM';
   const [paymentMethod, setPaymentMethod] = useState<PaymentSelection>(initialTransaction?.paymentMethod.startsWith('CUSTOM:') ? 'CUSTOM' : initialTransaction?.paymentMethod ?? 'ORANGE_MONEY');
   const [customPlatform, setCustomPlatform] = useState(initialTransaction?.paymentMethod.startsWith('CUSTOM:') ? initialTransaction.paymentMethod.slice(7) : '');
+  const [showSmsModal, setShowSmsModal] = useState(false);
 
   const categories = type === 'INCOME' && allowInitialBalance
     ? ['INITIAL_BALANCE', ...INCOME_CATEGORIES] as TransactionCategory[]
@@ -137,6 +139,16 @@ export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTran
 
   return (
     <View style={styles.card}>
+      {/* Quick SMS banner */}
+      <TouchableOpacity
+        style={styles.smsBanner}
+        onPress={() => setShowSmsModal(true)}
+      >
+        <Ionicons name="chatbox-ellipses-outline" size={18} color="#60a5fa" />
+        <Text style={styles.smsBannerText}>Remplir ou importer via SMS (Orange / PayCard)</Text>
+        <Ionicons name="chevron-forward" size={16} color="#60a5fa" />
+      </TouchableOpacity>
+
       {/* Type toggle — Dépôt / Retrait */}
       <View style={styles.toggle}>
         <TouchableOpacity
@@ -305,6 +317,18 @@ export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTran
           </Text>
         </TouchableOpacity>
       </Animated.View>
+
+      {/* Modal SMS */}
+      <SmsImportModal
+        visible={showSmsModal}
+        onClose={() => setShowSmsModal(false)}
+        liveRate={liveRate}
+        onImportSuccess={() => {
+          if (onComplete) {
+            onComplete();
+          }
+        }}
+      />
     </View>
   );
 }
@@ -320,6 +344,19 @@ const styles = StyleSheet.create({
     borderColor: '#1f2937',
   },
   cardTitle: { color: '#f9fafb', fontSize: 16, fontWeight: '700', letterSpacing: 0.2 },
+
+  smsBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#1e3a5f',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2563eb',
+  },
+  smsBannerText: { color: '#93c5fd', fontSize: 13, fontWeight: '600', flex: 1 },
 
   toggle: { flexDirection: 'row', gap: 8 },
   toggleBtn: {
