@@ -1,4 +1,5 @@
 import { InitialBalanceForm } from '@/components/InitialBalanceForm';
+import { SmsImportModal } from '@/components/SmsImportModal';
 import { useBiometricLock } from '@/hooks/use-biometric-lock';
 import { useExchangeRate } from '@/hooks/use-exchange-rate';
 import { useCapitalStore } from '@/store/useCapitalStore';
@@ -12,6 +13,7 @@ export default function SettingsScreen() {
   const transactions = useCapitalStore((state) => state.transactions);
   const clearTransactions = useCapitalStore((state) => state.clearTransactions);
   const [showInitialBalance, setShowInitialBalance] = useState(false);
+  const [showSmsModal, setShowSmsModal] = useState(false);
   const { available: biometricAvailable, enabled: biometricEnabled, enable: enableBiometric, disable: disableBiometric } = useBiometricLock();
 
   const handleBiometricToggle = async () => {
@@ -52,7 +54,18 @@ export default function SettingsScreen() {
           <Text style={styles.help}>Le taux est récupéré automatiquement en ligne et conservé localement pour continuer à convertir sans réseau.</Text>
         </View>
 
-        <Text style={styles.sectionHeading}>Actions</Text>
+        <Text style={styles.sectionHeading}>Actions & Intégrations</Text>
+
+        {/* SMS import action */}
+        <TouchableOpacity style={styles.actionCard} onPress={() => setShowSmsModal(true)}>
+          <Ionicons name="chatbox-ellipses-outline" size={19} color="#60a5fa" />
+          <View style={styles.actionInfo}>
+            <Text style={styles.ruleTitle}>Importer par SMS</Text>
+            <Text style={styles.ruleText}>Orange Money & PayCard (Carte bancaire)</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={17} color="#64748b" />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.actionCard} onPress={handleBiometricToggle} disabled={!biometricAvailable}>
           <Ionicons name="finger-print-outline" size={19} color={biometricAvailable ? '#34d399' : '#64748b'} />
           <View style={styles.actionInfo}><Text style={styles.ruleTitle}>Verrouillage biométrique</Text><Text style={styles.ruleText}>{biometricAvailable ? (biometricEnabled ? 'Activé · toucher pour désactiver' : 'Protéger l’accès à l’application') : 'Biométrie indisponible sur cet appareil'}</Text></View>
@@ -81,6 +94,9 @@ export default function SettingsScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* SMS Modal */}
+      <SmsImportModal visible={showSmsModal} onClose={() => setShowSmsModal(false)} liveRate={rate} />
     </SafeAreaView>
   );
 }
