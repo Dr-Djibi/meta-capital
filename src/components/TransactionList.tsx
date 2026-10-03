@@ -13,7 +13,7 @@ import {
 } from '@/store/useCapitalStore';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -36,7 +36,11 @@ interface SwipeableRowProps {
   onEdit: () => void;
 }
 
-function SwipeableRow({ item, liveRate, onDelete, onEdit }: SwipeableRowProps) {
+// ⚡ Bolt Optimization: Wrap SwipeableRow in React.memo with custom comparison.
+// Prevents re-rendering heavy gesture handlers & reanimated styles for all 30 items
+// during search input keystrokes or parent component re-renders.
+const SwipeableRow = React.memo(
+  function SwipeableRow({ item, liveRate, onDelete, onEdit }: SwipeableRowProps) {
   const translateX = useSharedValue(0);
 
   const isIncome = item.type === 'INCOME';
@@ -176,7 +180,10 @@ function SwipeableRow({ item, liveRate, onDelete, onEdit }: SwipeableRowProps) {
       </GestureDetector>
     </View>
   );
-}
+},
+(prevProps, nextProps) =>
+  prevProps.item === nextProps.item && prevProps.liveRate === nextProps.liveRate
+);
 
 // ─── Filtres ────────────────────────────────────────────────────────────────
 
@@ -237,25 +244,37 @@ export function TransactionList({ liveRate = 8600, onEdit }: TransactionListProp
   const [filter, setFilter] = React.useState<FilterType>('ALL');
   const [search, setSearch] = React.useState('');
 
-  const filtered = transactions.filter((t) => {
-    if (filter !== 'ALL' && t.type !== filter) return false;
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      const label = CATEGORY_LABELS[t.category].toLowerCase();
-      return (
-        label.includes(q) ||
-        t.description.toLowerCase().includes(q) ||
-        t.amount.toFixed(2).includes(q)
-      );
-    }
-    return true;
-  });
+  // ⚡ Bolt Optimization: Memoize search/filter list filtering and counts calculation
+  // Avoids running redundant array filter loops over transactions on every single keystroke.
+  const filtered = useMemo(() => {
+    return transactions.filter((t) => {
+      if (filter !== 'ALL' && t.type !== filter) return false;
+      if (search.trim()) {
+        const q = search.trim().toLowerCase();
+        const label = CATEGORY_LABELS[t.category].toLowerCase();
+        return (
+          label.includes(q) ||
+          t.description.toLowerCase().includes(q) ||
+          t.amount.toFixed(2).includes(q)
+        );
+      }
+      return true;
+    });
+  }, [transactions, filter, search]);
 
-  const counts = {
-    all: transactions.length,
-    income: transactions.filter((t) => t.type === 'INCOME').length,
-    expense: transactions.filter((t) => t.type === 'EXPENSE').length,
-  };
+  const counts = useMemo(() => {
+    let income = 0;
+    let expense = 0;
+    for (let i = 0; i < transactions.length; i++) {
+      if (transactions[i].type === 'INCOME') income++;
+      else if (transactions[i].type === 'EXPENSE') expense++;
+    }
+    return {
+      all: transactions.length,
+      income,
+      expense,
+    };
+  }, [transactions]);
 
   if (transactions.length === 0) {
     return (
