@@ -45,6 +45,7 @@ export interface Transaction {
   paymentMethod: PaymentMethod;
   description: string;
   date: string;
+  reference?: string;
   productId?: string;
   productTitle?: string;
   saleQuantity?: number;
@@ -59,6 +60,8 @@ interface CapitalState {
   updateTransaction: (id: string, updates: Omit<Transaction, 'id' | 'date'>) => void;
   deleteTransaction: (id: string) => void;
   clearTransactions: () => void;
+  /** Vrai si une transaction existe déjà avec cette référence SMS */
+  hasTransactionWithReference: (ref: string) => boolean;
   /** Capital net en USD */
   getNetCapital: () => number;
 }
@@ -92,6 +95,16 @@ export const useCapitalStore = create<CapitalState>()(
         })),
 
       clearTransactions: () => set({ transactions: [] }),
+
+      hasTransactionWithReference: (ref) => {
+        if (!ref) return false;
+        const clean = ref.trim().toUpperCase();
+        return get().transactions.some(
+          (t) =>
+            (t.reference && t.reference.trim().toUpperCase() === clean) ||
+            (t.description && t.description.toUpperCase().includes(clean))
+        );
+      },
 
       getNetCapital: () => {
         const { transactions } = get();

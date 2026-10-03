@@ -41,6 +41,7 @@ export function SmsImportModal({
   onImportSuccess,
 }: SmsImportModalProps) {
   const addTransaction = useCapitalStore((s) => s.addTransaction);
+  const hasTransactionWithReference = useCapitalStore((s) => s.hasTransactionWithReference);
   const [pastedText, setPastedText] = useState('');
   const [parsedItems, setParsedItems] = useState<ParsedSMS[]>([]);
 
@@ -75,8 +76,21 @@ export function SmsImportModal({
       return;
     }
 
+    // Filtrer les doublons sauf si l'utilisateur insiste
+    const newItems = parsedItems.filter(
+      (item) => !item.reference || !hasTransactionWithReference(item.reference)
+    );
+
+    if (newItems.length === 0) {
+      Alert.alert(
+        'Transactions déjà enregistrées ⚠️',
+        'Toutes les transactions sélectionnées ont déjà été importées précédemment.'
+      );
+      return;
+    }
+
     let importedCount = 0;
-    for (const item of parsedItems) {
+    for (const item of newItems) {
       const amountUSD = toUSD(item.amountGNF, 'GNF', liveRate);
       addTransaction({
         amount: amountUSD,
@@ -85,6 +99,7 @@ export function SmsImportModal({
         type: item.type,
         category: item.category,
         paymentMethod: item.paymentMethod,
+        reference: item.reference,
         description: item.description + (item.reference ? ` (Ref: ${item.reference})` : ''),
       });
       importedCount++;
@@ -93,7 +108,7 @@ export function SmsImportModal({
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Alert.alert(
       'Import réussi ! 🎉',
-      `${importedCount} transaction(s) ont été importée(s) dans votre journal.`
+      `${importedCount} nouvelle(s) transaction(s) ont été enregistrée(s).`
     );
 
     if (onImportSuccess) {
@@ -179,6 +194,7 @@ export function SmsImportModal({
 
                 {parsedItems.map((item, idx) => {
                   const isExpense = item.type === 'EXPENSE';
+                  const isDuplicate = !!item.reference && hasTransactionWithReference(item.reference);
                   const providerColor =
                     item.provider === 'ORANGE_MONEY'
                       ? PAYMENT_METHOD_COLORS.ORANGE_MONEY
@@ -186,7 +202,7 @@ export function SmsImportModal({
                   const usdApprox = (item.amountGNF / liveRate).toFixed(2);
 
                   return (
-                    <View key={idx} style={styles.itemCard}>
+                    <View key={idx} style={[styles.itemCard, isDuplicate && styles.itemCardDuplicate]}>
                       <View style={styles.itemHeader}>
                         <View style={styles.badgesRow}>
                           <View style={[styles.badge, { backgroundColor: providerColor + '20', borderColor: providerColor }]}>
@@ -207,6 +223,12 @@ export function SmsImportModal({
                               {isExpense ? 'Retrait' : 'Dépôt'}
                             </Text>
                           </View>
+                          {isDuplicate && (
+                            <View style={styles.duplicateBadge}>
+                              <Ionicons name="checkmark-done" size={11} color="#f59e0b" />
+                              <Text style={styles.duplicateBadgeText}>Déjà enregistré</Text>
+                            </View>
+                          )}
                         </View>
 
                         <TouchableOpacity onPress={() => handleRemoveItem(idx)}>
@@ -291,7 +313,7 @@ export function SmsImportModal({
               <TouchableOpacity style={styles.importBtn} onPress={handleImportAll}>
                 <Ionicons name="add-circle-outline" size={20} color="#fff" />
                 <Text style={styles.importBtnText}>
-                  Importer {parsedItems.length} transaction(s)
+                  Importer {parsedItems.filter((i) => !i.reference || !hasTransactionWithReference(i.reference)).length} nouvelle(s) transaction(s)
                 </Text>
               </TouchableOpacity>
             </View>
@@ -395,8 +417,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1f2937',
   },
+  itemCardDuplicate: {
+    borderColor: '#b45309',
+    backgroundColor: '#1e1b18',
+  },
   itemHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  badgesRow: { flexDirection: 'row', gap: 8 },
+  badgesRow: { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -404,6 +430,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   badgeText: { fontSize: 11, fontWeight: '700' },
+  duplicateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    backgroundColor: '#451a03',
+    borderWidth: 1,
+    borderColor: '#f59e0b',
+  },
+  duplicateBadgeText: { color: '#f59e0b', fontSize: 11, fontWeight: '700' },
 
   amountRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
   amountGNF: { fontSize: 20, fontWeight: '800' },

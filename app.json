@@ -16,6 +16,10 @@
         "foregroundImage": "./assets/images/meta-capital-icon.png",
         "monochromeImage": "./assets/images/meta-capital-icon.png"
       },
+      "permissions": [
+        "RECEIVE_SMS",
+        "READ_SMS"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
