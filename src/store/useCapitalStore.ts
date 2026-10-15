@@ -55,6 +55,8 @@ export interface Transaction {
 
 interface CapitalState {
   transactions: Transaction[];
+  autoReadSmsEnabled: boolean;
+  setAutoReadSmsEnabled: (enabled: boolean) => void;
   addTransaction: (t: Omit<Transaction, 'id' | 'date'>) => void;
   updateTransaction: (id: string, updates: Omit<Transaction, 'id' | 'date'>) => void;
   deleteTransaction: (id: string) => void;
@@ -67,6 +69,9 @@ export const useCapitalStore = create<CapitalState>()(
   persist(
     (set, get) => ({
       transactions: [],
+      autoReadSmsEnabled: false,
+
+      setAutoReadSmsEnabled: (enabled) => set({ autoReadSmsEnabled: enabled }),
 
       addTransaction: (t) =>
         set((s) => ({

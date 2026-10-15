@@ -56,6 +56,20 @@ export default function SettingsScreen() {
 
         <Text style={styles.sectionHeading}>Actions & Intégrations</Text>
 
+        {/* SMS Auto-Read setting */}
+        <TouchableOpacity style={styles.actionCard} onPress={() => useCapitalStore.getState().setAutoReadSmsEnabled(!useCapitalStore.getState().autoReadSmsEnabled)}>
+          <Ionicons name="shield-checkmark-outline" size={19} color={useCapitalStore((s) => s.autoReadSmsEnabled) ? '#34d399' : '#60a5fa'} />
+          <View style={styles.actionInfo}>
+            <Text style={styles.ruleTitle}>Lecture automatique des SMS</Text>
+            <Text style={styles.ruleText}>
+              {useCapitalStore((s) => s.autoReadSmsEnabled)
+                ? 'Autorisé · Détecte automatiquement Orange & Paycard'
+                : 'Désactivé · Touchez pour autoriser la détection'}
+            </Text>
+          </View>
+          <Ionicons name={useCapitalStore((s) => s.autoReadSmsEnabled) ? 'toggle' : 'toggle-outline'} size={25} color={useCapitalStore((s) => s.autoReadSmsEnabled) ? '#34d399' : '#64748b'} />
+        </TouchableOpacity>
+
         {/* SMS import action */}
         <TouchableOpacity style={styles.actionCard} onPress={() => setShowSmsModal(true)}>
           <Ionicons name="chatbox-ellipses-outline" size={19} color="#60a5fa" />

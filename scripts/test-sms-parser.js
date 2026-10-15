@@ -13,6 +13,7 @@ function loadTSModule(filePath) {
   content = content.replace(/:\s*ParsedSMS\s*\[\]/g, '');
   content = content.replace(/:\s*ParsedSMS\s*\|\s*null/g, '');
   content = content.replace(/:\s*ParsedSMS/g, '');
+  content = content.replace(/:\s*boolean/g, '');
   content = content.replace(/:\s*string\s*\|\s*undefined/g, '');
   content = content.replace(/:\s*string/g, '');
   content = content.replace(/:\s*number/g, '');
@@ -21,7 +22,7 @@ function loadTSModule(filePath) {
   content = content.replace(/export\s+/g, '');
 
   const module = { exports: {} };
-  const fn = new Function('module', 'exports', content + '\nreturn { parseGNFAmount, detectCategory, parseSingleSMS, parseSMSBatch };');
+  const fn = new Function('module', 'exports', content + '\nreturn { parseGNFAmount, isOrangeOrPaycardSMS, detectCategory, parseSingleSMS, parseSMSBatch };');
   return fn(module, module.exports);
 }
 
@@ -166,11 +167,21 @@ for (const t of allTests) {
   }
 }
 
+console.log('\n--- TEST IS_ORANGE_OR_PAYCARD_SMS FILTERING ---');
+const nonSmsText = 'Bonjour votre code de verification WhatsApp est 123456';
+if (!smsParser.isOrangeOrPaycardSMS(nonSmsText)) {
+  console.log('✅ PASSED: Le filtre a correctement rejeté un SMS non Orange/Paycard.');
+  passed++;
+} else {
+  console.error('❌ FAILED: Le filtre a accepté par erreur un SMS non Orange/Paycard.');
+  failed++;
+}
+
 console.log('\n--- TEST BATCH / MULTI-SMS ---');
-const batchText = allTests.map((t) => t.sms).join('\n\n');
+const batchText = [...allTests.map((t) => t.sms), nonSmsText].join('\n\n');
 const batchRes = smsParser.parseSMSBatch(batchText);
 if (batchRes.length === allTests.length) {
-  console.log(`✅ PASSED: Multi-SMS batch parsing a extrait ${batchRes.length}/${allTests.length} SMS.`);
+  console.log(`✅ PASSED: Multi-SMS batch parsing a extrait ${batchRes.length}/${allTests.length} SMS valides et ignoré le SMS tiers.`);
   passed++;
 } else {
   console.error(`❌ FAILED: Multi-SMS batch parsing a extrait ${batchRes.length}/${allTests.length} SMS.`);
