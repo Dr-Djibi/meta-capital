@@ -49,6 +49,15 @@ export function SmsImportModal({
   const [pastedText, setPastedText] = useState('');
   const [parsedItems, setParsedItems] = useState<ParsedSMS[]>([]);
 
+  const handlePastedTextChange = (text: string) => {
+    setPastedText(text);
+    if (text.trim()) {
+      setParsedItems(parseSMSBatch(text));
+    } else {
+      setParsedItems([]);
+    }
+  };
+
   // Automatic Clipboard Reading when modal opens and autoRead is enabled
   useEffect(() => {
     let active = true;
@@ -59,6 +68,7 @@ export function SmsImportModal({
             const items = parseSMSBatch(text);
             if (items.length > 0) {
               setPastedText(text);
+              setParsedItems(items);
             }
           }
         })
@@ -68,15 +78,6 @@ export function SmsImportModal({
       active = false;
     };
   }, [visible, autoReadSmsEnabled]);
-
-  useEffect(() => {
-    if (pastedText.trim()) {
-      const items = parseSMSBatch(pastedText);
-      setParsedItems(items);
-    } else {
-      setParsedItems([]);
-    }
-  }, [pastedText]);
 
   const handleUpdateCategory = (index: number, newCat: TransactionCategory) => {
     setParsedItems((prev) =>
@@ -193,11 +194,11 @@ export function SmsImportModal({
                 placeholderTextColor="#6b7280"
                 multiline
                 value={pastedText}
-                onChangeText={setPastedText}
+                onChangeText={handlePastedTextChange}
                 numberOfLines={4}
               />
               {pastedText.length > 0 && (
-                <TouchableOpacity style={styles.clearBtn} onPress={() => setPastedText('')}>
+                <TouchableOpacity style={styles.clearBtn} onPress={() => handlePastedTextChange('')}>
                   <Ionicons name="close-circle-outline" size={16} color="#9ca3af" />
                   <Text style={styles.clearBtnText}>Effacer</Text>
                 </TouchableOpacity>
@@ -209,7 +210,7 @@ export function SmsImportModal({
               <Text style={styles.samplesLabel}>Essayer un exemple :</Text>
               <TouchableOpacity
                 style={[styles.sampleChip, { borderColor: PAYMENT_METHOD_COLORS.ORANGE_MONEY }]}
-                onPress={() => setPastedText(SAMPLE_ORANGE_MONEY)}
+                onPress={() => handlePastedTextChange(SAMPLE_ORANGE_MONEY)}
               >
                 <Ionicons name="phone-portrait-outline" size={13} color={PAYMENT_METHOD_COLORS.ORANGE_MONEY} />
                 <Text style={[styles.sampleText, { color: PAYMENT_METHOD_COLORS.ORANGE_MONEY }]}>
@@ -218,7 +219,7 @@ export function SmsImportModal({
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.sampleChip, { borderColor: PAYMENT_METHOD_COLORS.CARTE_BANCAIRE }]}
-                onPress={() => setPastedText(SAMPLE_PAYCARD)}
+                onPress={() => handlePastedTextChange(SAMPLE_PAYCARD)}
               >
                 <Ionicons name="card-outline" size={13} color={PAYMENT_METHOD_COLORS.CARTE_BANCAIRE} />
                 <Text style={[styles.sampleText, { color: PAYMENT_METHOD_COLORS.CARTE_BANCAIRE }]}>
@@ -350,7 +351,7 @@ export function SmsImportModal({
               <View style={styles.noResultsBox}>
                 <Ionicons name="alert-circle-outline" size={28} color="#f59e0b" />
                 <Text style={styles.noResultsText}>
-                  Aucun format de SMS reconnu. Assurez-vous d'avoir collé le texte exact du SMS Orange Money ou PayCard.
+                  Aucun format de SMS reconnu. Assurez-vous d&apos;avoir collé le texte exact du SMS Orange Money ou PayCard.
                 </Text>
               </View>
             ) : null}
