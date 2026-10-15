@@ -14,12 +14,14 @@ import * as Haptics from 'expo-haptics';
 import { parseSMSBatch, ParsedSMS } from '@/utils/smsParser';
 import { useCapitalStore, CATEGORY_LABELS, CATEGORY_ICONS, TransactionCategory } from '@/store/useCapitalStore';
 import { toUSD, USD_TO_GNF, PAYMENT_METHOD_COLORS } from '@/constants/currency';
+import * as Clipboard from 'expo-clipboard';
 
 interface SmsImportModalProps {
   visible: boolean;
   onClose: () => void;
   liveRate?: number;
   onImportSuccess?: (count: number) => void;
+  onSelectSMSForPreFill?: (parsed: ParsedSMS) => void;
 }
 
 const SAMPLE_ORANGE_MONEY = `Bonjour,vous venez d efectuar un paiement de 14000.00GNF chez Achat de pass pour tiers2.Frais 0.00GNF, Nouveau Solde 13432045.55GNF, Ref :MP261002.1231.B32921. Orange Money vous remercie.`;
@@ -39,10 +41,33 @@ export function SmsImportModal({
   onClose,
   liveRate = USD_TO_GNF,
   onImportSuccess,
+  onSelectSMSForPreFill,
 }: SmsImportModalProps) {
   const addTransaction = useCapitalStore((s) => s.addTransaction);
+  const autoReadSmsEnabled = useCapitalStore((s) => s.autoReadSmsEnabled);
+  const setAutoReadSmsEnabled = useCapitalStore((s) => s.setAutoReadSmsEnabled);
   const [pastedText, setPastedText] = useState('');
   const [parsedItems, setParsedItems] = useState<ParsedSMS[]>([]);
+
+  // Automatic Clipboard Reading when modal opens and autoRead is enabled
+  useEffect(() => {
+    let active = true;
+    if (visible && autoReadSmsEnabled) {
+      Clipboard.getStringAsync()
+        .then((text) => {
+          if (active && text && text.trim()) {
+            const items = parseSMSBatch(text);
+            if (items.length > 0) {
+              setPastedText(text);
+            }
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, [visible, autoReadSmsEnabled]);
 
   useEffect(() => {
     if (pastedText.trim()) {
@@ -128,6 +153,38 @@ export function SmsImportModal({
               Collez vos messages de transaction Orange Money ou PayCard pour les enregistrer automatiquement.
             </Text>
 
+            {/* Auto Read Permission Toggle Card */}
+            <TouchableOpacity
+              style={[
+                styles.autoReadCard,
+                autoReadSmsEnabled && styles.autoReadCardActive,
+              ]}
+              onPress={() => setAutoReadSmsEnabled(!autoReadSmsEnabled)}
+            >
+              <View style={styles.autoReadTextWrapper}>
+                <View style={styles.autoReadTitleRow}>
+                  <Ionicons
+                    name={autoReadSmsEnabled ? "checkmark-circle" : "shield-checkmark-outline"}
+                    size={18}
+                    color={autoReadSmsEnabled ? "#34d399" : "#60a5fa"}
+                  />
+                  <Text style={styles.autoReadTitle}>
+                    {autoReadSmsEnabled ? "Lecture automatique activée" : "Autoriser la lecture automatique"}
+                  </Text>
+                </View>
+                <Text style={styles.autoReadSub}>
+                  {autoReadSmsEnabled
+                    ? "Les SMS de Orange & PayCard copiés sont détectés automatiquement."
+                    : "Appuyez pour autoriser l'application à lire le presse-papier lors de l'ouverture."}
+                </Text>
+              </View>
+              <Ionicons
+                name={autoReadSmsEnabled ? "toggle" : "toggle-outline"}
+                size={26}
+                color={autoReadSmsEnabled ? "#34d399" : "#9ca3af"}
+              />
+            </TouchableOpacity>
+
             {/* Input area */}
             <View style={styles.inputCard}>
               <TextInput
@@ -209,9 +266,23 @@ export function SmsImportModal({
                           </View>
                         </View>
 
-                        <TouchableOpacity onPress={() => handleRemoveItem(idx)}>
-                          <Ionicons name="trash-outline" size={18} color="#9ca3af" />
-                        </TouchableOpacity>
+                        <View style={styles.actionIconsRow}>
+                          {onSelectSMSForPreFill && (
+                            <TouchableOpacity
+                              style={styles.prefillBtn}
+                              onPress={() => {
+                                onSelectSMSForPreFill(item);
+                                onClose();
+                              }}
+                            >
+                              <Ionicons name="create-outline" size={14} color="#60a5fa" />
+                              <Text style={styles.prefillBtnText}>Pré-remplir</Text>
+                            </TouchableOpacity>
+                          )}
+                          <TouchableOpacity onPress={() => handleRemoveItem(idx)}>
+                            <Ionicons name="trash-outline" size={18} color="#9ca3af" />
+                          </TouchableOpacity>
+                        </View>
                       </View>
 
                       {/* Montant */}
@@ -395,6 +466,35 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1f2937',
   },
+  autoReadCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#111827',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+  },
+  autoReadCardActive: {
+    backgroundColor: '#064e3b20',
+    borderColor: '#059669',
+  },
+  autoReadTextWrapper: { flex: 1, gap: 2, marginRight: 8 },
+  autoReadTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  autoReadTitle: { color: '#f9fafb', fontSize: 13, fontWeight: '700' },
+  autoReadSub: { color: '#9ca3af', fontSize: 11, lineHeight: 15 },
+  actionIconsRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  prefillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#1e3a5f',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  prefillBtnText: { color: '#60a5fa', fontSize: 11, fontWeight: '700' },
   itemHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   badgesRow: { flexDirection: 'row', gap: 8 },
   badge: {

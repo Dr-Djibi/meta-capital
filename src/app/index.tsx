@@ -8,6 +8,7 @@ import { TransactionList } from '@/components/TransactionList';
 import { CapitalChart } from '@/components/CapitalChart';
 import { BudgetBanner, BudgetSettings } from '@/components/BudgetBanner';
 import { SmsImportModal } from '@/components/SmsImportModal';
+import { ParsedSMS } from '@/utils/smsParser';
 import { useExchangeRate } from '@/hooks/use-exchange-rate';
 import { formatUSD, formatGNF } from '@/constants/currency';
 import { exportTransactionsToCSV } from '@/utils/exportCsv';
@@ -20,9 +21,17 @@ export default function DashboardScreen() {
   const [showFormModal, setShowFormModal] = useState(false);
   const [showSmsModal, setShowSmsModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [prefillSMS, setPrefillSMS] = useState<ParsedSMS | undefined>(undefined);
 
   const openNewTransaction = () => {
     setEditingTransaction(null);
+    setPrefillSMS(undefined);
+    setShowFormModal(true);
+  };
+
+  const handleSelectSMSForPreFill = (parsed: ParsedSMS) => {
+    setEditingTransaction(null);
+    setPrefillSMS(parsed);
     setShowFormModal(true);
   };
 
@@ -177,12 +186,14 @@ export default function DashboardScreen() {
               </TouchableOpacity>
             </View>
             <TransactionForm
-              key={editingTransaction?.id ?? 'new'}
+              key={editingTransaction?.id ?? prefillSMS?.rawText ?? 'new'}
               liveRate={liveRate}
               initialTransaction={editingTransaction ?? undefined}
+              initialParsedSMS={prefillSMS}
               onComplete={() => {
                 setShowFormModal(false);
                 setEditingTransaction(null);
+                setPrefillSMS(undefined);
               }}
             />
           </View>
@@ -194,6 +205,7 @@ export default function DashboardScreen() {
         visible={showSmsModal}
         onClose={() => setShowSmsModal(false)}
         liveRate={liveRate}
+        onSelectSMSForPreFill={handleSelectSMSForPreFill}
       />
     </SafeAreaView>
   );

@@ -35,6 +35,7 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 import { SmsImportModal } from '@/components/SmsImportModal';
+import { ParsedSMS } from '@/utils/smsParser';
 
 const INCOME_CATEGORIES: TransactionCategory[] = [
   'PERSONAL_FUNDS',
@@ -58,19 +59,44 @@ interface TransactionFormProps {
   liveRate?: number;
   onComplete?: () => void;
   initialTransaction?: Transaction;
+  initialParsedSMS?: ParsedSMS;
   allowInitialBalance?: boolean;
 }
 
-export function TransactionForm({ liveRate = USD_TO_GNF, onComplete, initialTransaction, allowInitialBalance = false }: TransactionFormProps) {
+export function TransactionForm({
+  liveRate = USD_TO_GNF,
+  onComplete,
+  initialTransaction,
+  initialParsedSMS,
+  allowInitialBalance = false,
+}: TransactionFormProps) {
   const addTransaction = useCapitalStore((s) => s.addTransaction);
   const updateTransaction = useCapitalStore((s) => s.updateTransaction);
-  const [type, setType] = useState<'INCOME' | 'EXPENSE'>(initialTransaction?.type ?? 'INCOME');
-  const [amount, setAmount] = useState(initialTransaction?.originalAmount.toString() ?? '');
-  const [currency, setCurrency] = useState<Currency>(initialTransaction?.currency ?? 'USD');
-  const [description, setDescription] = useState(initialTransaction?.description ?? '');
-  const [category, setCategory] = useState<TransactionCategory>(initialTransaction?.category ?? 'PERSONAL_FUNDS');
+  const [type, setType] = useState<'INCOME' | 'EXPENSE'>(
+    initialParsedSMS?.type ?? initialTransaction?.type ?? 'INCOME'
+  );
+  const [amount, setAmount] = useState(
+    initialParsedSMS ? initialParsedSMS.amountGNF.toString() : initialTransaction?.originalAmount.toString() ?? ''
+  );
+  const [currency, setCurrency] = useState<Currency>(
+    initialParsedSMS ? 'GNF' : initialTransaction?.currency ?? 'USD'
+  );
+  const [description, setDescription] = useState(
+    initialParsedSMS
+      ? `${initialParsedSMS.description}${initialParsedSMS.reference ? ` (Ref: ${initialParsedSMS.reference})` : ''}`
+      : initialTransaction?.description ?? ''
+  );
+  const [category, setCategory] = useState<TransactionCategory>(
+    initialParsedSMS?.category ?? initialTransaction?.category ?? 'PERSONAL_FUNDS'
+  );
   type PaymentSelection = PaymentMethod | 'CUSTOM';
-  const [paymentMethod, setPaymentMethod] = useState<PaymentSelection>(initialTransaction?.paymentMethod.startsWith('CUSTOM:') ? 'CUSTOM' : initialTransaction?.paymentMethod ?? 'ORANGE_MONEY');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentSelection>(
+    initialParsedSMS
+      ? initialParsedSMS.paymentMethod
+      : initialTransaction?.paymentMethod.startsWith('CUSTOM:')
+      ? 'CUSTOM'
+      : initialTransaction?.paymentMethod ?? 'ORANGE_MONEY'
+  );
   const [customPlatform, setCustomPlatform] = useState(initialTransaction?.paymentMethod.startsWith('CUSTOM:') ? initialTransaction.paymentMethod.slice(7) : '');
   const [showSmsModal, setShowSmsModal] = useState(false);
 

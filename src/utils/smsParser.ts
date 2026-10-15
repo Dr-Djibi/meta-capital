@@ -28,6 +28,24 @@ function cleanReference(ref?: string): string | undefined {
   return ref.trim().replace(/\.+$/, '');
 }
 
+/** Vérifie si un message provient de Orange Money ou Paycard */
+export function isOrangeOrPaycardSMS(text: string): boolean {
+  if (!text || !text.trim()) return false;
+  const upper = text.toUpperCase();
+  return (
+    upper.includes('ORANGE') ||
+    upper.includes('PAYCARD') ||
+    upper.includes('PAY CARD') ||
+    upper.includes('VISA') ||
+    upper.includes('DEPOT DE') ||
+    upper.includes('RECEPTION DE:') ||
+    upper.includes('ENVOI DE:') ||
+    upper.includes('RETRAIT DE') ||
+    upper.includes('NOUVEAU SOLDE') ||
+    upper.includes('SOLDE :')
+  );
+}
+
 /** Auto-détection intelligente de la catégorie */
 export function detectCategory(description: string, type: 'INCOME' | 'EXPENSE'): TransactionCategory {
   const upper = description.toUpperCase();
@@ -255,7 +273,7 @@ export function parseSMSBatch(text: string): ParsedSMS[] {
   const lines = text
     .split(/(?=\b(?:Bonjour|Vous avez|vous avez|\d+Bonjour)\b)/gi)
     .map((s) => s.trim())
-    .filter((s) => s.length > 10);
+    .filter((s) => s.length > 10 && isOrangeOrPaycardSMS(s));
 
   const results: ParsedSMS[] = [];
   for (const line of lines) {
