@@ -8,7 +8,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { BiometricLockProvider, useBiometricLock } from '@/hooks/use-biometric-lock';
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
